@@ -30,7 +30,14 @@ import mslinks.ShellLink;
 public class ApplicationWindow extends Application {
 
 	private static ArrayList<Website> newWebsites;
+	private static ArrayList<Website> scriptSites;
 	private static TextField websiteField;
+	private static TextField scriptName;
+	private static FlowPane websitePane;
+	private static TextArea websiteLabels;
+	private static FlowPane textPane;
+	
+	
 	public static void main(String[] args) {
 		launch(args);
 	}
@@ -40,6 +47,23 @@ public class ApplicationWindow extends Application {
 	public void start(Stage primaryStage) throws IOException {
 
 		newWebsites = new ArrayList<Website>();
+		scriptSites = new ArrayList<Website>();
+		
+		websitePane = new FlowPane();
+		
+		websiteField = new TextField("https://");
+		scriptName = new TextField();
+		websiteLabels = new TextArea();
+		
+		
+		websiteLabels.setPrefSize(250, 150);
+		websiteLabels.setEditable(false);
+		websiteLabels.setStyle("-fx-font-weight: bold");
+		
+		websitePane.getChildren().add(websiteLabels);
+		websitePane.setPadding(new Insets(20, 20, 20, 0));
+		
+		
 		//The primaryStage is the top-level container
 		primaryStage.setTitle("Easy-Script-Generator");
 		BorderPane componentLayout = new BorderPane();
@@ -47,28 +71,27 @@ public class ApplicationWindow extends Application {
 
 
 		//The FlowPane is a conatiner that uses a flow layout
-		FlowPane textPane = new FlowPane();
-		textPane.setHgap(100);
+		textPane = new FlowPane();
+		textPane.setHgap(10);
 		Label choiceLbl = new Label("Website");
-
-
-		websiteField = new TextField("https://");
-		websiteField.setDisable(false);
-
+		
 		Button submitBtn = new Button("Create Shortcut!");
-
+		
 		textPane.getChildren().add(choiceLbl);
 		textPane.getChildren().add(websiteField);
+		textPane.getChildren().add(scriptName);
 
 		componentLayout.setTop(textPane);
-
+		componentLayout.setCenter(websitePane);
+		
+		
+		
 		submitBtn.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
 				try {
 					createBatch();
-					FlowPane websitePane = addLabels();
-					componentLayout.setCenter(websitePane);
+					addLabels();
 				} catch (IOException e) {
 					System.out.print("Could not generate the shortcut.");
 					e.printStackTrace();
@@ -78,35 +101,40 @@ public class ApplicationWindow extends Application {
 
 
 		componentLayout.setBottom(submitBtn);
-		//Add the BorderPane to the Scene
+
+		
 		Scene appScene = new Scene(componentLayout,500,500);
-		//Add the Scene to the Stage
 		primaryStage.setScene(appScene);
 		primaryStage.show();
 	}
 
-	public static FlowPane addLabels() {
-		FlowPane websitePane = new FlowPane();
+	public static void addLabels() {
 			for (Website website: newWebsites) {
-				Label websiteLabel = new Label(website.getLabel());
-				websitePane.getChildren().add(websiteLabel);
-				newWebsites.remove(website);
+				websiteLabels.appendText(website.getLabel() + "\n");
 			}
-		return websitePane;
+			newWebsites.clear();
+	}
+	
+	
+	public static void addWebsiteToList(Website website) {
+		
 	}
 
 	public static void createBatch() throws IOException { 
-		File file=new File("C:\\Users\\Public\\Desktop\\test.bat"); 
+		Website website = new Website(websiteField.getText(), scriptName.getText());
+		
+		File file=new File("C:\\Users\\Public\\Desktop\\" + website.getLabel() + ".bat"); 
 		FileOutputStream fos=new FileOutputStream(file); 
 		DataOutputStream dos=new DataOutputStream(fos); 
-		Website website = new Website(websiteField.getText());
+
 		dos.writeBytes("start " + website.getURL()); 
 		newWebsites.add(website);
+		scriptSites.add(website);
 		websiteField.clear();
-		//dos.writeBytes("START note.txt"); 
+		scriptName.clear();
 		file.setReadOnly();
 		dos.close();
 		fos.close();
-		ShellLink.createLink("C:\\Users\\Public\\Desktop\\test.bat", "C:\\Users\\Public\\Desktop\\test.lnk");
+		ShellLink.createLink("C:\\Users\\Public\\Desktop\\" + website.getLabel() + ".bat", "C:\\Users\\Public\\Desktop\\" + website.getLabel()+ ".lnk");
 	} 
 }
