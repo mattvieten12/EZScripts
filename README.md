@@ -1,4 +1,5 @@
 Easy-Script-Generator
+
 GUI interface that allows users to create (export) scripts with no scripting knowledge. These scripts will help them run multiple computer programs or webpages (or both) from generated batch files. When the program is run, it will generate a .bat file that will execute all of the specified programs/web pages. That bat file will also have a .lnk shortcut created which will be placed on the user's Desktop and will allow them to double click the batch shortcut and execute multiple programs at once in order to save time in the long run.
 
 Example Use Cases:
