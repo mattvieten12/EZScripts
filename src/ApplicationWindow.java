@@ -40,7 +40,7 @@ public class ApplicationWindow extends Application {
 	private static TextField websiteURL;
 	private static TextField scriptName;
 	private static FlowPane websitePane;
-	private static TextArea websiteLabels;
+	private static ListView<String> websiteLabels;
 	private static FlowPane textPane;
 	private static String websiteName;
 
@@ -60,7 +60,7 @@ public class ApplicationWindow extends Application {
 
 		websiteURL = new TextField("https://");
 		websiteName = "";
-		websiteLabels = new TextArea();
+		websiteLabels = new ListView();
 
 
 		websiteLabels.setPrefSize(250, 150);
@@ -92,7 +92,26 @@ public class ApplicationWindow extends Application {
 		componentLayout.setCenter(websitePane);
 
 
-
+		/*final Button removeButton = new Button("Remove Selected");
+	    removeButton.setOnAction(new EventHandler<ActionEvent>() {
+	      @Override public void handle(ActionEvent event) {
+	        final int selectedIdx = websiteLabels.getSelectionModel().getSelectedIndex();
+	        if (selectedIdx != -1) {
+	          String itemToRemove = websiteLabels.getSelectionModel().getSelectedItem();
+	 
+	          final int newSelectedIdx =
+	            (selectedIdx == websiteLabels.getItems().size() - 1)
+	               ? selectedIdx - 1
+	               : selectedIdx;
+	 
+	          websiteLabels.getItems().remove(selectedIdx);
+	          status.setText("Removed " + itemToRemove);
+	          websiteLabels.getSelectionModel().select(newSelectedIdx);
+	        }
+	      }
+	    });*/
+	    
+	    
 		addWebsiteBtn.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -136,6 +155,9 @@ public class ApplicationWindow extends Application {
 						dialog.hide();
 						try {
 							createBatch();
+							websiteLabels = new ListView<String>();
+							scriptSites = new ArrayList<Website>();
+							newestWebsite = null;
 							
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -165,7 +187,7 @@ public class ApplicationWindow extends Application {
 		newestWebsite = website;
 		scriptSites.add(website);
 		websiteURL.clear();
-		websiteLabels.appendText(newestWebsite.getLabel() + "\n");
+		websiteLabels.getItems().addAll(newestWebsite.getLabel() + "\n");
 	}
 
 	public static void createBatch() throws IOException { 
@@ -188,5 +210,5 @@ public class ApplicationWindow extends Application {
 		dos.close();
 		fos.close();
 		ShellLink.createLink("C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".bat", "C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".lnk");
-	} 
+	}
 }
