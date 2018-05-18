@@ -38,11 +38,11 @@ public class ApplicationWindow extends Application {
 	private static Website newestWebsite;
 	private static ArrayList<Website> scriptSites;
 	private static TextField websiteURL;
-	private static TextField websiteName;
 	private static TextField scriptName;
 	private static FlowPane websitePane;
 	private static TextArea websiteLabels;
 	private static FlowPane textPane;
+	private static String websiteName;
 
 
 	public static void main(String[] args) {
@@ -59,7 +59,7 @@ public class ApplicationWindow extends Application {
 		websitePane = new FlowPane();
 
 		websiteURL = new TextField("https://");
-		websiteName = new TextField();
+		websiteName = "";
 		websiteLabels = new TextArea();
 
 
@@ -86,7 +86,7 @@ public class ApplicationWindow extends Application {
 
 		textPane.getChildren().add(urlLabel);
 		textPane.getChildren().add(websiteURL);
-		textPane.getChildren().add(websiteName);
+		//textPane.getChildren().add(websiteName);
 
 		componentLayout.setTop(textPane);
 		componentLayout.setCenter(websitePane);
@@ -96,7 +96,16 @@ public class ApplicationWindow extends Application {
 		addWebsiteBtn.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				addWebsiteToList(new Website(websiteURL.getText(), websiteName.getText()));
+				if (websiteURL != null) {
+					websiteName = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+					addWebsiteToList(new Website(websiteURL.getText(), websiteName));
+				}
+				else if (websiteURL == null) {
+					System.out.println("Please add a websiteURL and try again!");
+				}
+				else if (websiteName == null) {
+					System.out.println("Please add a website name and try again!");
+				}
 			}
 		});
 
@@ -127,6 +136,7 @@ public class ApplicationWindow extends Application {
 						dialog.hide();
 						try {
 							createBatch();
+							
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -164,9 +174,15 @@ public class ApplicationWindow extends Application {
 		DataOutputStream dos=new DataOutputStream(fos); 
 		String newLine = System.getProperty("line.separator");
 		for (Website website: scriptSites) {
-			dos.writeBytes("call start " + website.getURL()); 
+			if (scriptSites.get(0) == website) {
+				dos.writeBytes("call start chrome.exe -new-window " + website.getURL()); 
+				dos.writeBytes(newLine);
+				dos.writeBytes("sleep 1");
+			}
+			else {
+				dos.writeBytes("call start chrome.exe " + website.getURL()); 
+			}
 			dos.writeBytes(newLine);
-			websiteName.clear();
 			file.setReadOnly();
 		}
 		dos.close();
