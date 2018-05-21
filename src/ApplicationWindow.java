@@ -7,6 +7,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -82,92 +84,160 @@ public class ApplicationWindow extends Application {
 		textPane.setHgap(10);
 		Label urlLabel = new Label("URL");
 
-		Button submitBtn = new Button("Create Shortcut!");
-		Button addWebsiteBtn = new Button("Add website!");
 
 		textPane.getChildren().add(urlLabel);
 		textPane.getChildren().add(websiteURL);
 
-		componentLayout.setTop(textPane);
-		componentLayout.setCenter(websitePane);
+
+		final Button removeWebsiteButton = new Button("Remove Selected");
+		final Button updateWebsiteLVButton = new Button("Update Selected");
+		final Button addWebsiteButton = new Button("Add website!");
+		final Button updateWebsiteURLButton = new Button("Update");
+		final Button submitButton = new Button("Create Shortcut!");
 
 
-		final Button removeButton = new Button("Remove Selected");
-		removeButton.setOnAction(new EventHandler<ActionEvent>() {
+		removeWebsiteButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
 				String websiteName = websiteLabelsListView.getSelectionModel().getSelectedItem();
-				for (Website website: scriptSites) {
-
-					if (websiteName.equals(website.getLabel())) {
-						System.out.println("hello");
-						removeWebsiteFromList(website);
-						break;
+				if (websiteName != null) {
+					for (Website website: scriptSites) {
+						if (websiteName.equals(website.getLabel())) {
+							System.out.println("hello");
+							removeWebsiteFromList(website);
+							break;
+						}
 					}
 				}
 			}
 		});
 
-		websitePane.getChildren().add(removeButton);
 
-		addWebsiteBtn.setOnAction(new EventHandler<ActionEvent>() {
+		addWebsiteButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				if (websiteURL != null) {
+				String strURL = websiteURL.getText();
+				String regex = "^(((https?|ftp|file)://)|(www.))[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
+				Pattern p = Pattern.compile(regex);
+				Matcher m = p.matcher(strURL);
+				if (strURL != null && m.find()) {
+					removeWebsiteButton.setVisible(true);
+					updateWebsiteLVButton.setVisible(true);
 					String websiteName = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
 					addWebsiteToList(new Website(websiteURL.getText(), websiteName));
 				}
-				else if (websiteURL == null) {
-					System.out.println("Please add a websiteURL and try again!");
+			}
+		});
+
+		textPane.getChildren().add(addWebsiteButton);
+
+		updateWebsiteLVButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent event) {
+				String websiteToUpdateName = websiteLabelsListView.getSelectionModel().getSelectedItem();
+				if (websiteToUpdateName != null) {
+					addWebsiteButton.setVisible(false);
+					addWebsiteButton.setManaged(false);
+					updateWebsiteURLButton.setVisible(true);
+					updateWebsiteURLButton.setManaged(true);
+					for (Website website: scriptSites) {
+						if (websiteToUpdateName.equals(website.getLabel())) {
+							websiteURL.setText(website.getURL());
+
+							break;
+						}
+					}
+
+					updateWebsiteURLButton.setOnAction(new EventHandler<ActionEvent>() {
+						@Override
+						public void handle(ActionEvent event) {
+							String websiteToAddName = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+							Integer selectedIndex = websiteLabelsListView.getSelectionModel().getSelectedIndex();
+							Website tempWebsite = new Website(websiteURL.getText(), websiteToAddName);
+							scriptSites.add(tempWebsite);
+							websiteURL.clear();
+							websiteLabelsListView.getItems().add(selectedIndex, tempWebsite.getLabel());
+
+							for (Website website: scriptSites) {
+								if (websiteToUpdateName.equals(website.getLabel())) {
+									removeWebsiteFromList(website);
+									break;
+								}
+							}
+							updateWebsiteURLButton.setVisible(false);
+							updateWebsiteURLButton.setManaged(false);
+							addWebsiteButton.setManaged(true);
+							addWebsiteButton.setVisible(true);
+						}
+					});
+					updateWebsiteURLButton.setVisible(false);
+					updateWebsiteURLButton.setManaged(false);
+					textPane.getChildren().add(updateWebsiteURLButton);
+
 				}
 			}
 		});
 
-		submitBtn.setOnAction(new EventHandler<ActionEvent>() {
+		removeWebsiteButton.setVisible(false);
+		updateWebsiteLVButton.setVisible(false);
+
+		BorderPane middleRightPane = new BorderPane();
+		middleRightPane.setTop(removeWebsiteButton);
+		middleRightPane.setCenter(updateWebsiteLVButton);
+		websitePane.getChildren().add(middleRightPane);
+
+
+		componentLayout.setTop(textPane);
+		componentLayout.setCenter(websitePane);
+
+		submitButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				final Stage dialog = new Stage();
-				dialog.initModality(Modality.APPLICATION_MODAL);
-				dialog.initOwner(primaryStage);
-				BorderPane popupPane = new BorderPane();
-				popupPane.getChildren().add(new Text("Script Generate Confirmation"));
-				Scene dialogScene = new Scene(popupPane, 300, 200);
-				dialog.setScene(dialogScene);
-				dialog.show();
+				if (scriptSites.isEmpty() == false) {
+					final Stage dialog = new Stage();
+					dialog.initModality(Modality.APPLICATION_MODAL);
+					dialog.initOwner(primaryStage);
+					BorderPane popupPane = new BorderPane();
+					popupPane.getChildren().add(new Text("Script Generate Confirmation"));
+					Scene dialogScene = new Scene(popupPane, 300, 200);
+					dialog.setScene(dialogScene);
+					dialog.show();
 
-				scriptName = new TextField();
-				Label scriptNameLabel = new Label("Pick a name for your generated script!");
+					scriptName = new TextField();
+					Label scriptNameLabel = new Label("Pick a name for your generated script!");
 
-				FlowPane scriptPane = new FlowPane();
-				scriptPane.getChildren().addAll(scriptNameLabel);
-				scriptPane.getChildren().addAll(scriptName);
-				popupPane.setCenter(scriptPane);
-				Button popupOKBtn = new Button("OK");
+					FlowPane scriptPane = new FlowPane();
+					scriptPane.getChildren().addAll(scriptNameLabel);
+					scriptPane.getChildren().addAll(scriptName);
+					popupPane.setCenter(scriptPane);
 
-				popupOKBtn.setOnAction(new EventHandler<ActionEvent>() {
-					@Override
-					public void handle(ActionEvent event) {
-						dialog.hide();
-						try {
-							createBatch();
-							websiteLabelsListView = new ListView<String>();
-							scriptSites = new ArrayList<Website>();
-							newestWebsite = null;
+					Button popupOKBtn = new Button("OK");
+					popupOKBtn.setOnAction(new EventHandler<ActionEvent>() {
+						@Override
+						public void handle(ActionEvent event) {
+							if (scriptName != null) {
+								dialog.hide();
+								try {
+									createBatch();
+									websiteLabelsListView.getItems().clear();
+									scriptSites = new ArrayList<Website>();
+									newestWebsite = null;
 
-						} catch (IOException e) {
-							e.printStackTrace();
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
 						}
-					}
-				});
-				FlowPane bottomPane = new FlowPane();
-				bottomPane.getChildren().add(popupOKBtn);
-				popupPane.setBottom(bottomPane);
+					});
+					FlowPane bottomPane = new FlowPane();
+					bottomPane.getChildren().add(popupOKBtn);
+					popupPane.setBottom(bottomPane);
+				}
 			}
 		});
 
 
 		FlowPane bottomPane = new FlowPane();
-		bottomPane.getChildren().add(addWebsiteBtn);
-		bottomPane.getChildren().add(submitBtn);
+		//bottomPane.getChildren().add(addWebsiteBtn);
+		bottomPane.getChildren().add(submitButton);
 		componentLayout.setBottom(bottomPane);
 
 
@@ -187,6 +257,11 @@ public class ApplicationWindow extends Application {
 	public static void removeWebsiteFromList(Website website) {
 		scriptSites.remove(website);
 		websiteLabelsListView.getItems().remove(website.getLabel());
+	}
+
+	public static void updateWebsiteFromList(Website website) {
+		websiteURL.setText(website.getURL());
+
 	}
 
 	public static boolean isWindows() {
@@ -215,13 +290,11 @@ public class ApplicationWindow extends Application {
 			String newLine = System.getProperty("line.separator");
 			for (Website website: scriptSites) {
 				if (scriptSites.get(0) == website) {
-					dos.writeBytes("call start chrome.exe -new-window " + website.getURL()); 
-					dos.writeBytes(newLine);
-					dos.writeBytes("sleep 1");
+					dos.writeBytes("call start /w chrome.exe -new-window " + website.getURL()); 
 					dos.writeBytes(newLine);
 				}
 				else {
-					dos.writeBytes("call start chrome.exe " + website.getURL()); 
+					dos.writeBytes("call start /w chrome.exe " + website.getURL()); 
 				}
 				dos.writeBytes(newLine);
 				file.setReadOnly();
