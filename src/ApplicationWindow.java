@@ -40,10 +40,10 @@ public class ApplicationWindow extends Application {
 	private static TextField websiteURL;
 	private static TextField scriptName;
 	private static FlowPane websitePane;
-	private static ListView<String> websiteLabels;
+	private static ListView<String> websiteLabelsListView;
 	private static FlowPane textPane;
-	private static String websiteName;
 
+	private static String OS;
 
 	public static void main(String[] args) {
 		launch(args);
@@ -53,21 +53,22 @@ public class ApplicationWindow extends Application {
 	@Override
 	public void start(Stage primaryStage) throws IOException {
 
+
+		System.out.println(System.getProperty("user.home"));
 		newestWebsite = null;
 		scriptSites = new ArrayList<Website>();
 
 		websitePane = new FlowPane();
 
 		websiteURL = new TextField("https://");
-		websiteName = "";
-		websiteLabels = new ListView();
+		websiteLabelsListView = new ListView<String>();
 
 
-		websiteLabels.setPrefSize(250, 150);
-		websiteLabels.setEditable(false);
-		websiteLabels.setStyle("-fx-font-weight: bold");
+		websiteLabelsListView.setPrefSize(250, 150);
+		websiteLabelsListView.setEditable(false);
+		websiteLabelsListView.setStyle("-fx-font-weight: bold");
 
-		websitePane.getChildren().add(websiteLabels);
+		websitePane.getChildren().add(websiteLabelsListView);
 		websitePane.setPadding(new Insets(20, 20, 20, 0));
 
 
@@ -86,44 +87,37 @@ public class ApplicationWindow extends Application {
 
 		textPane.getChildren().add(urlLabel);
 		textPane.getChildren().add(websiteURL);
-		//textPane.getChildren().add(websiteName);
 
 		componentLayout.setTop(textPane);
 		componentLayout.setCenter(websitePane);
 
 
-		/*final Button removeButton = new Button("Remove Selected");
-	    removeButton.setOnAction(new EventHandler<ActionEvent>() {
-	      @Override public void handle(ActionEvent event) {
-	        final int selectedIdx = websiteLabels.getSelectionModel().getSelectedIndex();
-	        if (selectedIdx != -1) {
-	          String itemToRemove = websiteLabels.getSelectionModel().getSelectedItem();
-	 
-	          final int newSelectedIdx =
-	            (selectedIdx == websiteLabels.getItems().size() - 1)
-	               ? selectedIdx - 1
-	               : selectedIdx;
-	 
-	          websiteLabels.getItems().remove(selectedIdx);
-	          status.setText("Removed " + itemToRemove);
-	          websiteLabels.getSelectionModel().select(newSelectedIdx);
-	        }
-	      }
-	    });*/
-	    
-	    
+		final Button removeButton = new Button("Remove Selected");
+		removeButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent event) {
+				String websiteName = websiteLabelsListView.getSelectionModel().getSelectedItem();
+				for (Website website: scriptSites) {
+
+					if (websiteName.equals(website.getLabel())) {
+						System.out.println("hello");
+						removeWebsiteFromList(website);
+						break;
+					}
+				}
+			}
+		});
+
+		websitePane.getChildren().add(removeButton);
+
 		addWebsiteBtn.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
 				if (websiteURL != null) {
-					websiteName = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+					String websiteName = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
 					addWebsiteToList(new Website(websiteURL.getText(), websiteName));
 				}
 				else if (websiteURL == null) {
 					System.out.println("Please add a websiteURL and try again!");
-				}
-				else if (websiteName == null) {
-					System.out.println("Please add a website name and try again!");
 				}
 			}
 		});
@@ -155,10 +149,10 @@ public class ApplicationWindow extends Application {
 						dialog.hide();
 						try {
 							createBatch();
-							websiteLabels = new ListView<String>();
+							websiteLabelsListView = new ListView<String>();
 							scriptSites = new ArrayList<Website>();
 							newestWebsite = null;
-							
+
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -187,28 +181,82 @@ public class ApplicationWindow extends Application {
 		newestWebsite = website;
 		scriptSites.add(website);
 		websiteURL.clear();
-		websiteLabels.getItems().addAll(newestWebsite.getLabel() + "\n");
+		websiteLabelsListView.getItems().addAll(newestWebsite.getLabel());
+	}
+
+	public static void removeWebsiteFromList(Website website) {
+		scriptSites.remove(website);
+		websiteLabelsListView.getItems().remove(website.getLabel());
+	}
+
+	public static boolean isWindows() {
+
+		return (OS.indexOf("win") >= 0);
+
+	}
+
+	public static boolean isMac() {
+
+		return (OS.indexOf("mac") >= 0);
+
 	}
 
 	public static void createBatch() throws IOException { 
-		File file=new File("C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".bat"); 
-		FileOutputStream fos=new FileOutputStream(file); 
-		DataOutputStream dos=new DataOutputStream(fos); 
-		String newLine = System.getProperty("line.separator");
-		for (Website website: scriptSites) {
-			if (scriptSites.get(0) == website) {
-				dos.writeBytes("call start chrome.exe -new-window " + website.getURL()); 
+
+
+		OS = System.getProperty("os.name").toLowerCase();
+
+		System.out.println(OS);
+
+		if (isWindows()) {
+			File file=new File("C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".bat"); 
+			FileOutputStream fos=new FileOutputStream(file); 
+			DataOutputStream dos=new DataOutputStream(fos); 
+			String newLine = System.getProperty("line.separator");
+			for (Website website: scriptSites) {
+				if (scriptSites.get(0) == website) {
+					dos.writeBytes("call start chrome.exe -new-window " + website.getURL()); 
+					dos.writeBytes(newLine);
+					dos.writeBytes("sleep 1");
+					dos.writeBytes(newLine);
+				}
+				else {
+					dos.writeBytes("call start chrome.exe " + website.getURL()); 
+				}
 				dos.writeBytes(newLine);
-				dos.writeBytes("sleep 1");
+				file.setReadOnly();
 			}
-			else {
-				dos.writeBytes("call start chrome.exe " + website.getURL()); 
-			}
+			dos.close();
+			fos.close();
+			ShellLink.createLink("C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".bat", "C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".lnk");
+		} else if (isMac()) {
+			File file = new File(System.getProperty("user.home") + "/Desktop/" + scriptName.getText() + ".command"); 
+			FileOutputStream fos=new FileOutputStream(file); 
+			DataOutputStream dos=new DataOutputStream(fos); 
+			String newLine = System.getProperty("line.separator");
+			dos.writeBytes("#!/bin/bash");
 			dos.writeBytes(newLine);
-			file.setReadOnly();
+			for (Website website: scriptSites) {
+				if (scriptSites.get(0) == website) {
+					dos.writeBytes("open -na 'Google Chrome' --args --new-window " + website.getURL()); 
+					dos.writeBytes(newLine);
+					file.setReadOnly();
+					dos.writeBytes("sleep 1");
+					dos.writeBytes(newLine);
+				}
+				else if (scriptSites.get(scriptSites.size() - 1) == website) {
+					dos.writeBytes("open -na 'Google Chrome' " + website.getURL()); 
+				}
+				else {
+					dos.writeBytes("open -na 'Google Chrome' " + website.getURL()); 
+					dos.writeBytes(newLine);
+				}
+			}
+			dos.close();
+			fos.close();
+			file.setExecutable(true);
+		} else {
+			System.out.println("Your OS is not supported!!");
 		}
-		dos.close();
-		fos.close();
-		ShellLink.createLink("C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".bat", "C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".lnk");
 	}
 }
