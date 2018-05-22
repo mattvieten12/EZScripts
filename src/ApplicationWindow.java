@@ -168,14 +168,15 @@ public class ApplicationWindow extends Application {
 							addWebsiteButton.setVisible(true);
 						}
 					});
-					updateWebsiteURLButton.setVisible(false);
-					updateWebsiteURLButton.setManaged(false);
-					textPane.getChildren().add(updateWebsiteURLButton);
-
 				}
 			}
 		});
 
+		updateWebsiteURLButton.setVisible(false);
+		updateWebsiteURLButton.setManaged(false);
+		textPane.getChildren().add(updateWebsiteURLButton);
+		
+		
 		removeWebsiteButton.setVisible(false);
 		updateWebsiteLVButton.setVisible(false);
 
@@ -210,6 +211,9 @@ public class ApplicationWindow extends Application {
 					popupPane.setCenter(scriptPane);
 
 					Button popupOKBtn = new Button("OK");
+					
+					FlowPane bottomPane = new FlowPane();
+					
 					popupOKBtn.setOnAction(new EventHandler<ActionEvent>() {
 						@Override
 						public void handle(ActionEvent event) {
@@ -221,13 +225,17 @@ public class ApplicationWindow extends Application {
 									scriptSites = new ArrayList<Website>();
 									newestWebsite = null;
 
+								} catch (FileNotFoundException e) {
+									Label label = new Label("File already exists, please select a different name.");
+									label.setTextFill(Color.RED);
+									bottomPane.getChildren().add(label);
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
 							}
 						}
 					});
-					FlowPane bottomPane = new FlowPane();
+					
 					bottomPane.getChildren().add(popupOKBtn);
 					popupPane.setBottom(bottomPane);
 				}
@@ -276,7 +284,7 @@ public class ApplicationWindow extends Application {
 
 	}
 
-	public static void createBatch() throws IOException { 
+	public static void createBatch() throws IOException, FileNotFoundException { 
 
 
 		OS = System.getProperty("os.name").toLowerCase();
@@ -314,13 +322,15 @@ public class ApplicationWindow extends Application {
 					dos.writeBytes("open -na 'Google Chrome' --args --new-window " + website.getURL()); 
 					dos.writeBytes(newLine);
 					file.setReadOnly();
-					dos.writeBytes("sleep 1");
+					dos.writeBytes("wait");
 					dos.writeBytes(newLine);
 				}
 				else if (scriptSites.get(scriptSites.size() - 1) == website) {
 					dos.writeBytes("open -na 'Google Chrome' " + website.getURL()); 
 				}
 				else {
+					dos.writeBytes("wait");
+					dos.writeBytes(newLine);
 					dos.writeBytes("open -na 'Google Chrome' " + website.getURL()); 
 					dos.writeBytes(newLine);
 				}
