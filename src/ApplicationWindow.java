@@ -157,7 +157,7 @@ public class ApplicationWindow extends Application {
 							websiteLabelsListView.getItems().add(selectedIndex, tempWebsite.getLabel());
 
 							for (Website website: scriptSites) {
-								if (websiteToUpdateName.equals(website.getLabel())) {
+								if (websiteToUpdateName == website.getLabel()) {
 									removeWebsiteFromList(website);
 									break;
 								}
@@ -218,17 +218,19 @@ public class ApplicationWindow extends Application {
 						@Override
 						public void handle(ActionEvent event) {
 							if (scriptName != null) {
-								dialog.hide();
+								
 								try {
 									createBatch();
 									websiteLabelsListView.getItems().clear();
 									scriptSites = new ArrayList<Website>();
 									newestWebsite = null;
+									dialog.hide();
 
 								} catch (FileNotFoundException e) {
 									Label label = new Label("File already exists, please select a different name.");
 									label.setTextFill(Color.RED);
 									bottomPane.getChildren().add(label);
+									popupPane.setBottom(bottomPane);
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
