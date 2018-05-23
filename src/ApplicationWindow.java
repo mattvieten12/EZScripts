@@ -138,30 +138,22 @@ public class ApplicationWindow extends Application {
 					addWebsiteButton.setManaged(false);
 					updateWebsiteURLButton.setVisible(true);
 					updateWebsiteURLButton.setManaged(true);
-					for (Website website: scriptSites) {
-						if (websiteToUpdateName.equals(website.getLabel())) {
-							websiteURL.setText(website.getURL());
-
-							break;
-						}
-					}
+					int selectedIndex = websiteLabelsListView.getSelectionModel().getSelectedIndex();
+					websiteURL.setText(scriptSites.get(selectedIndex).getURL());
 
 					updateWebsiteURLButton.setOnAction(new EventHandler<ActionEvent>() {
 						@Override
 						public void handle(ActionEvent event) {
 							String websiteToAddName = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
-							Integer selectedIndex = websiteLabelsListView.getSelectionModel().getSelectedIndex();
 							Website tempWebsite = new Website(websiteURL.getText(), websiteToAddName);
-							scriptSites.add(tempWebsite);
 							websiteURL.clear();
+							websiteLabelsListView.getItems().remove(selectedIndex);
+							scriptSites.remove(selectedIndex);
+							scriptSites.add(selectedIndex, tempWebsite);
 							websiteLabelsListView.getItems().add(selectedIndex, tempWebsite.getLabel());
+							websiteLabelsListView.getSelectionModel().select(selectedIndex);
 
-							for (Website website: scriptSites) {
-								if (websiteToUpdateName == website.getLabel()) {
-									removeWebsiteFromList(website);
-									break;
-								}
-							}
+							
 							updateWebsiteURLButton.setVisible(false);
 							updateWebsiteURLButton.setManaged(false);
 							addWebsiteButton.setManaged(true);
