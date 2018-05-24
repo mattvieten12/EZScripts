@@ -25,6 +25,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import mslinks.ShellLink;
@@ -32,18 +33,29 @@ import mslinks.ShellLink;
 
 public class ApplicationWindow extends Application {
 
-	
-	private static TextField websiteURL;
-	private static TextField scriptName;
-	
-	private static FlowPane websitePane;
-	private static FlowPane textPane;
 
-	private static Website newestWebsite;
+	private static TextField websiteURL;
+	private static TextField appPath;
+
+	private static File fileChosen;
+
+	private static FlowPane websiteListPane;
+	private static FlowPane appListPane;
+
+	private static FlowPane websiteURLPane;
+	private static FlowPane appPathPane;
+
 	private static ArrayList<Website> scriptSites;
+	private static ArrayList<App> scriptApps;
+
 	private static ListView<String> websiteLabelsListView;
-	
-	private static String OS;
+	private static ListView<String> appLabelsListView;
+
+	private static TextField scriptName;
+
+	private final static Label websiteLabelWarning = new Label("Website URLs must begin with https:// or http:// or ftp:// or file:// or www. to be valid");
+	private final static Label nonExecutable = new Label("Please select a program executable!");
+	private final static String OS = System.getProperty("os.name").toLowerCase();
 
 	public static void main(String[] args) {
 		launch(args);
@@ -53,24 +65,35 @@ public class ApplicationWindow extends Application {
 	@Override
 	public void start(Stage primaryStage) throws IOException {
 
-
-		System.out.println(System.getProperty("user.home"));
-		newestWebsite = null;
 		scriptSites = new ArrayList<Website>();
+		scriptApps = new ArrayList<App>();
 
-		websitePane = new FlowPane();
+		websiteListPane = new FlowPane();
+		appListPane = new FlowPane();
 
-		websiteURL = new TextField("https://");
+		websiteURL = new TextField();
+
+		appPath = new TextField();
+		appPath.setEditable(false);
+
 		websiteLabelsListView = new ListView<String>();
+		appLabelsListView = new ListView<String>();
 
 
 		websiteLabelsListView.setPrefSize(250, 150);
 		websiteLabelsListView.setEditable(false);
 		websiteLabelsListView.setStyle("-fx-font-weight: bold");
 
-		websitePane.getChildren().add(websiteLabelsListView);
-		websitePane.setPadding(new Insets(20, 20, 20, 0));
+		appLabelsListView.setPrefSize(250, 150);
+		appLabelsListView.setEditable(false);
+		appLabelsListView.setStyle("-fx-font-weight: bold");
 
+
+		websiteListPane.getChildren().add(websiteLabelsListView);
+		websiteListPane.setPadding(new Insets(20, 20, 20, 0));
+
+		appListPane.getChildren().add(appLabelsListView);
+		appListPane.setPadding(new Insets(20, 20, 20, 0));
 
 		//The primaryStage is the top-level container
 		primaryStage.setTitle("Easy-Script-Generator");
@@ -78,20 +101,78 @@ public class ApplicationWindow extends Application {
 		componentLayout.setPadding(new Insets(20,0,20,20));
 
 
-		textPane = new FlowPane();
-		textPane.setHgap(10);
+		websiteURLPane = new FlowPane();
+		websiteURLPane.setHgap(10);
 		Label urlLabel = new Label("URL");
 
+		appPathPane = new FlowPane();
+		appPathPane.setHgap(10);
+		Label pathLabel = new Label("File Location");
 
-		textPane.getChildren().add(urlLabel);
-		textPane.getChildren().add(websiteURL);
+		websiteURLPane.getChildren().add(urlLabel);
+		websiteURLPane.getChildren().add(websiteURL);
 
+		appPathPane.getChildren().add(pathLabel);
+
+		appPathPane.getChildren().add(appPath);
 
 		final Button removeWebsiteButton = new Button("Remove Selected");
 		final Button updateWebsiteLVButton = new Button("Update Selected");
 		final Button addWebsiteButton = new Button("Add website!");
 		final Button updateWebsiteURLButton = new Button("Update");
 		final Button submitButton = new Button("Create Shortcut!");
+
+		final Button browseFilesButton = new Button("Browse files...");
+		final Button addFileButton = new Button("Add File!");
+		final Button removeFileButton = new Button("Remove File");
+
+		browseFilesButton.setOnAction(event -> {
+			FileChooser chooser = new FileChooser();
+			File file = chooser.showOpenDialog(primaryStage);
+			if (file != null && file.canExecute()) {
+				nonExecutable.setManaged(false);
+				nonExecutable.setVisible(false);
+				appPath.setText(file.getAbsolutePath());
+				fileChosen = file;
+				addFileButton.setManaged(true);
+				addFileButton.setVisible(true);
+			} else {
+				nonExecutable.setManaged(true);
+				nonExecutable.setVisible(true);
+			}
+		});
+
+		addFileButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent event) {
+				scriptApps.add(new App(fileChosen.getAbsolutePath(), fileChosen.getName()));
+				appLabelsListView.getItems().add(fileChosen.getName());
+				addFileButton.setManaged(false);
+				addFileButton.setVisible(false);
+			}
+		});
+
+		removeFileButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent event) {
+				String selectedItem = appLabelsListView.getSelectionModel().getSelectedItem();
+				if (selectedItem != null) {
+					int selectedIndex = appLabelsListView.getSelectionModel().getSelectedIndex();
+					scriptApps.remove(selectedIndex);
+					appLabelsListView.getItems().remove(selectedIndex);
+				}
+				if (appLabelsListView.getItems().isEmpty()) {
+					removeFileButton.setVisible(false);
+				}
+			}
+		});
+
+
+
+
+		appPathPane.getChildren().add(browseFilesButton);
+
+		addFileButton.setManaged(false);
+		addFileButton.setVisible(false);
+		appPathPane.getChildren().add(addFileButton);
 
 
 		removeWebsiteButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -116,17 +197,26 @@ public class ApplicationWindow extends Application {
 				String strURL = websiteURL.getText();
 				String regex = "^(((https?|ftp|file)://)|(www.))[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
 				Pattern p = Pattern.compile(regex);
-				Matcher m = p.matcher(strURL);
+				Matcher m = p.matcher(strURL);	
 				if (strURL != null && m.find()) {
+					websiteLabelWarning.setManaged(false);
+					websiteLabelWarning.setVisible(false);
 					removeWebsiteButton.setVisible(true);
 					updateWebsiteLVButton.setVisible(true);
 					String websiteName = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
-					addWebsiteToList(new Website(websiteURL.getText(), websiteName));
+					Website website = new Website(websiteURL.getText(), websiteName);
+					scriptSites.add(website);
+					websiteURL.clear();
+					websiteLabelsListView.getItems().addAll(website.getLabel());
+				}
+				else {
+					websiteLabelWarning.setManaged(true);
+					websiteLabelWarning.setVisible(true);
 				}
 			}
 		});
 
-		textPane.getChildren().add(addWebsiteButton);
+		websiteURLPane.getChildren().add(addWebsiteButton);
 
 		updateWebsiteLVButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
@@ -151,7 +241,7 @@ public class ApplicationWindow extends Application {
 							websiteLabelsListView.getItems().add(selectedIndex, tempWebsite.getLabel());
 							websiteLabelsListView.getSelectionModel().select(selectedIndex);
 
-							
+
 							updateWebsiteURLButton.setVisible(false);
 							updateWebsiteURLButton.setManaged(false);
 							addWebsiteButton.setManaged(true);
@@ -164,20 +254,50 @@ public class ApplicationWindow extends Application {
 
 		updateWebsiteURLButton.setVisible(false);
 		updateWebsiteURLButton.setManaged(false);
-		textPane.getChildren().add(updateWebsiteURLButton);
-		
-		
+		websiteURLPane.getChildren().add(updateWebsiteURLButton);
+
+		websiteLabelWarning.setTextFill(Color.RED);
+		websiteLabelWarning.setManaged(false);
+		websiteLabelWarning.setVisible(false);
+		websiteURLPane.getChildren().add(websiteLabelWarning);
+
+		nonExecutable.setTextFill(Color.RED);
+		nonExecutable.setManaged(false);
+		nonExecutable.setVisible(false);
+		appPathPane.getChildren().add(nonExecutable);
+
 		removeWebsiteButton.setVisible(false);
 		updateWebsiteLVButton.setVisible(false);
 
-		BorderPane middleRightPane = new BorderPane();
-		middleRightPane.setTop(removeWebsiteButton);
-		middleRightPane.setCenter(updateWebsiteLVButton);
-		websitePane.getChildren().add(middleRightPane);
+		BorderPane websiteOptionsPane = new BorderPane();
+		websiteOptionsPane.setTop(removeWebsiteButton);
+		websiteOptionsPane.setCenter(updateWebsiteLVButton);
+		websiteListPane.getChildren().add(websiteOptionsPane);
 
 
-		componentLayout.setTop(textPane);
-		componentLayout.setCenter(websitePane);
+		websiteURLPane.getChildren().add(websiteListPane);
+
+		appPathPane.getChildren().add(appListPane);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		componentLayout.setTop(websiteURLPane);
+		componentLayout.setCenter(appPathPane);
 
 		submitButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -201,19 +321,18 @@ public class ApplicationWindow extends Application {
 					popupPane.setCenter(scriptPane);
 
 					Button popupOKBtn = new Button("OK");
-					
+
 					FlowPane bottomPane = new FlowPane();
-					
+
 					popupOKBtn.setOnAction(new EventHandler<ActionEvent>() {
 						@Override
 						public void handle(ActionEvent event) {
 							if (scriptName != null) {
-								
+
 								try {
 									createBatch();
 									websiteLabelsListView.getItems().clear();
 									scriptSites = new ArrayList<Website>();
-									newestWebsite = null;
 									dialog.hide();
 
 								} catch (FileNotFoundException e) {
@@ -227,7 +346,7 @@ public class ApplicationWindow extends Application {
 							}
 						}
 					});
-					
+
 					bottomPane.getChildren().add(popupOKBtn);
 					popupPane.setBottom(bottomPane);
 				}
@@ -235,18 +354,18 @@ public class ApplicationWindow extends Application {
 		});
 
 		websiteLabelsListView.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
-		    @Override
-		    public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-		    	updateWebsiteURLButton.setVisible(false);
-		    	updateWebsiteURLButton.setManaged(false);
-		    	addWebsiteButton.setVisible(true);
-		    	addWebsiteButton.setManaged(true);
-		    }
+			@Override
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				updateWebsiteURLButton.setVisible(false);
+				updateWebsiteURLButton.setManaged(false);
+				addWebsiteButton.setVisible(true);
+				addWebsiteButton.setManaged(true);
+				websiteURL.setText(null);
+			}
 		});
-		
-		
+
+
 		FlowPane bottomPane = new FlowPane();
-		//bottomPane.getChildren().add(addWebsiteBtn);
 		bottomPane.getChildren().add(submitButton);
 		componentLayout.setBottom(bottomPane);
 
@@ -254,19 +373,8 @@ public class ApplicationWindow extends Application {
 		Scene appScene = new Scene(componentLayout,500,500);
 		primaryStage.setScene(appScene);
 		primaryStage.show();
-	}
 
-
-	public static void addWebsiteToList(Website website) {
-		newestWebsite = website;
-		scriptSites.add(website);
-		websiteURL.clear();
-		websiteLabelsListView.getItems().addAll(newestWebsite.getLabel());
-	}
-
-	public static void updateWebsiteFromList(Website website) {
-		websiteURL.setText(website.getURL());
-
+		primaryStage.setResizable(false);
 	}
 
 	public static boolean isWindows() {
@@ -282,11 +390,6 @@ public class ApplicationWindow extends Application {
 	}
 
 	public static void createBatch() throws IOException, FileNotFoundException { 
-
-
-		OS = System.getProperty("os.name").toLowerCase();
-
-		System.out.println(OS);
 
 		if (isWindows()) {
 			File file=new File("C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".bat"); 
