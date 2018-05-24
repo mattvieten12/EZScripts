@@ -11,40 +11,38 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javafx.application.Application;
-import javafx.collections.FXCollections;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
-import javafx.stage.Popup;
 import javafx.stage.Stage;
 import mslinks.ShellLink;
 
 
 public class ApplicationWindow extends Application {
 
-	private static Website newestWebsite;
-	private static ArrayList<Website> scriptSites;
+	
 	private static TextField websiteURL;
 	private static TextField scriptName;
+	
 	private static FlowPane websitePane;
-	private static ListView<String> websiteLabelsListView;
 	private static FlowPane textPane;
 
+	private static Website newestWebsite;
+	private static ArrayList<Website> scriptSites;
+	private static ListView<String> websiteLabelsListView;
+	
 	private static String OS;
 
 	public static void main(String[] args) {
@@ -99,14 +97,14 @@ public class ApplicationWindow extends Application {
 		removeWebsiteButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
 				String websiteName = websiteLabelsListView.getSelectionModel().getSelectedItem();
+				int selectedIndex = websiteLabelsListView.getSelectionModel().getSelectedIndex();
 				if (websiteName != null) {
-					for (Website website: scriptSites) {
-						if (websiteName.equals(website.getLabel())) {
-							System.out.println("hello");
-							removeWebsiteFromList(website);
-							break;
-						}
-					}
+					scriptSites.remove(selectedIndex);
+					websiteLabelsListView.getItems().remove(selectedIndex);
+				}
+				if (websiteLabelsListView.getItems().isEmpty()) {
+					removeWebsiteButton.setVisible(false);
+					updateWebsiteLVButton.setVisible(false);
 				}
 			}
 		});
@@ -236,7 +234,17 @@ public class ApplicationWindow extends Application {
 			}
 		});
 
-
+		websiteLabelsListView.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+		    @Override
+		    public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+		    	updateWebsiteURLButton.setVisible(false);
+		    	updateWebsiteURLButton.setManaged(false);
+		    	addWebsiteButton.setVisible(true);
+		    	addWebsiteButton.setManaged(true);
+		    }
+		});
+		
+		
 		FlowPane bottomPane = new FlowPane();
 		//bottomPane.getChildren().add(addWebsiteBtn);
 		bottomPane.getChildren().add(submitButton);
@@ -254,11 +262,6 @@ public class ApplicationWindow extends Application {
 		scriptSites.add(website);
 		websiteURL.clear();
 		websiteLabelsListView.getItems().addAll(newestWebsite.getLabel());
-	}
-
-	public static void removeWebsiteFromList(Website website) {
-		scriptSites.remove(website);
-		websiteLabelsListView.getItems().remove(website.getLabel());
 	}
 
 	public static void updateWebsiteFromList(Website website) {
