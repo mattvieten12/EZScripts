@@ -125,14 +125,16 @@ public class ApplicationWindow extends Application {
 		final Button browseFilesButton = new Button("Browse files...");
 		final Button addFileButton = new Button("Add File!");
 		final Button removeFileButton = new Button("Remove File");
-
+		final Button updateFileLVButton = new Button("Update File");
+		final Button updateAppPathButton = new Button("Update!");
+		
 		browseFilesButton.setOnAction(event -> {
 			FileChooser chooser = new FileChooser();
 			File file = chooser.showOpenDialog(primaryStage);
 			if (file != null && file.canExecute()) {
 				nonExecutable.setManaged(false);
 				nonExecutable.setVisible(false);
-				appPath.setText(file.getAbsolutePath());
+				appPath.setText(file.getName());
 				fileChosen = file;
 				addFileButton.setManaged(true);
 				addFileButton.setVisible(true);
@@ -148,6 +150,9 @@ public class ApplicationWindow extends Application {
 				appLabelsListView.getItems().add(fileChosen.getName());
 				addFileButton.setManaged(false);
 				addFileButton.setVisible(false);
+				removeFileButton.setVisible(true);
+				updateFileLVButton.setVisible(true);
+				appPath.clear();
 			}
 		});
 
@@ -161,6 +166,48 @@ public class ApplicationWindow extends Application {
 				}
 				if (appLabelsListView.getItems().isEmpty()) {
 					removeFileButton.setVisible(false);
+					updateFileLVButton.setVisible(false);
+				}
+			}
+		});
+		
+		updateFileLVButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent event) {
+				String fileToUpdateName = appLabelsListView.getSelectionModel().getSelectedItem();
+				if (fileToUpdateName != null) {
+					addFileButton.setVisible(false);
+					addFileButton.setManaged(false);
+					updateAppPathButton.setVisible(true);
+					updateAppPathButton.setManaged(true);
+					int selectedIndex = appLabelsListView.getSelectionModel().getSelectedIndex();
+					
+					FileChooser chooser = new FileChooser();
+					File file = chooser.showOpenDialog(primaryStage);
+					if (file != null && file.canExecute()) {
+						nonExecutable.setManaged(false);
+						nonExecutable.setVisible(false);
+						appPath.setText(file.getName());
+						fileChosen = file;
+					} else {
+						nonExecutable.setManaged(true);
+						nonExecutable.setVisible(true);
+					}
+					updateAppPathButton.setOnAction(new EventHandler<ActionEvent>() {
+						@Override
+						public void handle(ActionEvent event) {
+							App tempApp = new App(fileChosen.getAbsolutePath(), fileChosen.getName());
+							appPath.clear();
+							appLabelsListView.getItems().remove(selectedIndex);
+							scriptApps.remove(selectedIndex);
+							scriptApps.add(selectedIndex, tempApp);
+							appLabelsListView.getItems().add(selectedIndex, tempApp.getLabel());
+							appLabelsListView.getSelectionModel().select(selectedIndex);
+
+							fileChosen = null;
+							updateAppPathButton.setVisible(false);
+							updateAppPathButton.setManaged(false);
+						}
+					});
 				}
 			}
 		});
@@ -255,6 +302,10 @@ public class ApplicationWindow extends Application {
 		updateWebsiteURLButton.setVisible(false);
 		updateWebsiteURLButton.setManaged(false);
 		websiteURLPane.getChildren().add(updateWebsiteURLButton);
+		
+		updateAppPathButton.setVisible(false);
+		updateAppPathButton.setManaged(false);
+		appPathPane.getChildren().add(updateAppPathButton);
 
 		websiteLabelWarning.setTextFill(Color.RED);
 		websiteLabelWarning.setManaged(false);
@@ -268,11 +319,19 @@ public class ApplicationWindow extends Application {
 
 		removeWebsiteButton.setVisible(false);
 		updateWebsiteLVButton.setVisible(false);
-
+		
+		removeFileButton.setVisible(false);
+		updateFileLVButton.setVisible(false);
+		
 		BorderPane websiteOptionsPane = new BorderPane();
 		websiteOptionsPane.setTop(removeWebsiteButton);
 		websiteOptionsPane.setCenter(updateWebsiteLVButton);
 		websiteListPane.getChildren().add(websiteOptionsPane);
+		
+		BorderPane appOptionsPane = new BorderPane();
+		appOptionsPane.setTop(removeFileButton);
+		appOptionsPane.setCenter(updateFileLVButton);
+		appListPane.getChildren().add(appOptionsPane);
 
 
 		websiteURLPane.getChildren().add(websiteListPane);
@@ -332,7 +391,9 @@ public class ApplicationWindow extends Application {
 								try {
 									createBatch();
 									websiteLabelsListView.getItems().clear();
+									appLabelsListView.getItems().clear();
 									scriptSites = new ArrayList<Website>();
+									scriptApps = new ArrayList<App>();
 									dialog.hide();
 
 								} catch (FileNotFoundException e) {
@@ -403,9 +464,14 @@ public class ApplicationWindow extends Application {
 				}
 				else {
 					dos.writeBytes("call start /w chrome.exe " + website.getURL()); 
+					dos.writeBytes(newLine);
 				}
-				dos.writeBytes(newLine);
 				file.setReadOnly();
+			}
+			
+			for (App currApp: scriptApps) {
+				dos.writeBytes("start " + currApp.getPath() + " " + currApp.getLabel()); 
+				dos.writeBytes(newLine);
 			}
 			dos.close();
 			fos.close();
@@ -427,13 +493,19 @@ public class ApplicationWindow extends Application {
 				}
 				else if (scriptSites.get(scriptSites.size() - 1) == website) {
 					dos.writeBytes("open -na 'Google Chrome' " + website.getURL()); 
+					dos.writeBytes(newLine);
 				}
 				else {
-					dos.writeBytes("wait");
-					dos.writeBytes(newLine);
 					dos.writeBytes("open -na 'Google Chrome' " + website.getURL()); 
 					dos.writeBytes(newLine);
 				}
+			}
+			for (App currApp: scriptApps) {
+				String currPath = currApp.getPath();
+				String next = currPath.replaceAll("\\s", "\\");
+				System.out.println(next);
+				dos.writeBytes("open " + next); 
+				dos.writeBytes(newLine);
 			}
 			dos.close();
 			fos.close();
