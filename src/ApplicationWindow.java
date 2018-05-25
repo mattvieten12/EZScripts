@@ -394,6 +394,14 @@ public class ApplicationWindow extends Application {
 									appLabelsListView.getItems().clear();
 									scriptSites = new ArrayList<Website>();
 									scriptApps = new ArrayList<App>();
+									removeWebsiteButton.setVisible(false);
+									updateWebsiteLVButton.setVisible(false);
+									removeFileButton.setVisible(false);
+									updateWebsiteLVButton.setVisible(false);
+									updateWebsiteURLButton.setVisible(false);
+									addFileButton.setVisible(false);
+									appPath.clear();
+									websiteURL.clear();
 									dialog.hide();
 
 								} catch (FileNotFoundException e) {
