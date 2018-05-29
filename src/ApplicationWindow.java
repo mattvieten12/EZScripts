@@ -35,23 +35,37 @@ public class ApplicationWindow extends Application {
 
 
 	private static TextField websiteURL;
-	private static TextField appPath;
+	private static TextField filePath;
 
 	private static File fileChosen;
 
 	private static FlowPane websiteListPane;
-	private static FlowPane appListPane;
+	private static FlowPane fileListPane;
 
 	private static FlowPane websiteURLPane;
-	private static FlowPane appPathPane;
+	private static FlowPane filePathPane;
 
 	private static ArrayList<Website> scriptSites;
-	private static ArrayList<App> scriptApps;
+	private static ArrayList<App> scriptFiles;
 
 	private static ListView<String> websiteLabelsListView;
-	private static ListView<String> appLabelsListView;
+	private static ListView<String> fileLabelsListView;
 
 	private static TextField scriptName;
+	
+	final static Button removeWebsiteButton = new Button("Remove Selected");
+	final static Button updateWebsiteLVButton = new Button("Update Selected");
+	final static Button addWebsiteButton = new Button("Add website!");
+	final static Button updateWebsiteURLButton = new Button("Update");
+	final static Button clearWebsiteButton = new Button("Clear All Websites");
+	final static Button submitButton = new Button("Create Shortcut!");
+
+	final static Button browseFilesButton = new Button("Browse files...");
+	final static Button addFileButton = new Button("Add File!");
+	final static Button removeFileButton = new Button("Remove Selected");
+	final static Button updateFileLVButton = new Button("Update Selected");
+	final static Button clearFileButton = new Button("Clear All Files");
+	final static Button updateFilePathButton = new Button("Update!");
 
 	private final static Label websiteLabelWarning = new Label("Website URLs must begin with https:// or http:// or ftp:// or file:// or www. to be valid");
 	private final static Label nonExecutable = new Label("Please select a program executable!");
@@ -66,34 +80,34 @@ public class ApplicationWindow extends Application {
 	public void start(Stage primaryStage) throws IOException {
 
 		scriptSites = new ArrayList<Website>();
-		scriptApps = new ArrayList<App>();
+		scriptFiles = new ArrayList<App>();
 
 		websiteListPane = new FlowPane();
-		appListPane = new FlowPane();
+		fileListPane = new FlowPane();
 
 		websiteURL = new TextField();
 
-		appPath = new TextField();
-		appPath.setEditable(false);
+		filePath = new TextField();
+		filePath.setEditable(false);
 
 		websiteLabelsListView = new ListView<String>();
-		appLabelsListView = new ListView<String>();
+		fileLabelsListView = new ListView<String>();
 
 
 		websiteLabelsListView.setPrefSize(250, 150);
 		websiteLabelsListView.setEditable(false);
 		websiteLabelsListView.setStyle("-fx-font-weight: bold");
 
-		appLabelsListView.setPrefSize(250, 150);
-		appLabelsListView.setEditable(false);
-		appLabelsListView.setStyle("-fx-font-weight: bold");
+		fileLabelsListView.setPrefSize(250, 150);
+		fileLabelsListView.setEditable(false);
+		fileLabelsListView.setStyle("-fx-font-weight: bold");
 
 
 		websiteListPane.getChildren().add(websiteLabelsListView);
 		websiteListPane.setPadding(new Insets(20, 20, 20, 0));
 
-		appListPane.getChildren().add(appLabelsListView);
-		appListPane.setPadding(new Insets(20, 20, 20, 0));
+		fileListPane.getChildren().add(fileLabelsListView);
+		fileListPane.setPadding(new Insets(20, 20, 20, 0));
 
 		//The primaryStage is the top-level container
 		primaryStage.setTitle("Easy-Script-Generator");
@@ -105,36 +119,24 @@ public class ApplicationWindow extends Application {
 		websiteURLPane.setHgap(10);
 		Label urlLabel = new Label("URL");
 
-		appPathPane = new FlowPane();
-		appPathPane.setHgap(10);
+		filePathPane = new FlowPane();
+		filePathPane.setHgap(10);
 		Label pathLabel = new Label("File Location");
 
 		websiteURLPane.getChildren().add(urlLabel);
 		websiteURLPane.getChildren().add(websiteURL);
 
-		appPathPane.getChildren().add(pathLabel);
+		filePathPane.getChildren().add(pathLabel);
 
-		appPathPane.getChildren().add(appPath);
-
-		final Button removeWebsiteButton = new Button("Remove Selected");
-		final Button updateWebsiteLVButton = new Button("Update Selected");
-		final Button addWebsiteButton = new Button("Add website!");
-		final Button updateWebsiteURLButton = new Button("Update");
-		final Button submitButton = new Button("Create Shortcut!");
-
-		final Button browseFilesButton = new Button("Browse files...");
-		final Button addFileButton = new Button("Add File!");
-		final Button removeFileButton = new Button("Remove File");
-		final Button updateFileLVButton = new Button("Update File");
-		final Button updateAppPathButton = new Button("Update!");
+		filePathPane.getChildren().add(filePath);
 		
 		browseFilesButton.setOnAction(event -> {
 			FileChooser chooser = new FileChooser();
 			File file = chooser.showOpenDialog(primaryStage);
-			if (file != null && file.canExecute()) {
+			if (file != null) {
 				nonExecutable.setManaged(false);
 				nonExecutable.setVisible(false);
-				appPath.setText(file.getName());
+				filePath.setText(file.getName());
 				fileChosen = file;
 				addFileButton.setManaged(true);
 				addFileButton.setVisible(true);
@@ -146,66 +148,79 @@ public class ApplicationWindow extends Application {
 
 		addFileButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
-				scriptApps.add(new App(fileChosen.getAbsolutePath(), fileChosen.getName()));
-				appLabelsListView.getItems().add(fileChosen.getName());
+				scriptFiles.add(new App(fileChosen.getAbsolutePath(), fileChosen.getName()));
+				fileLabelsListView.getItems().add(fileChosen.getName());
 				addFileButton.setManaged(false);
 				addFileButton.setVisible(false);
 				removeFileButton.setVisible(true);
 				updateFileLVButton.setVisible(true);
-				appPath.clear();
+				clearFileButton.setVisible(true);
+				filePath.clear();
 			}
 		});
 
 		removeFileButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
-				String selectedItem = appLabelsListView.getSelectionModel().getSelectedItem();
+				String selectedItem = fileLabelsListView.getSelectionModel().getSelectedItem();
 				if (selectedItem != null) {
-					int selectedIndex = appLabelsListView.getSelectionModel().getSelectedIndex();
-					scriptApps.remove(selectedIndex);
-					appLabelsListView.getItems().remove(selectedIndex);
+					int selectedIndex = fileLabelsListView.getSelectionModel().getSelectedIndex();
+					scriptFiles.remove(selectedIndex);
+					fileLabelsListView.getItems().remove(selectedIndex);
 				}
-				if (appLabelsListView.getItems().isEmpty()) {
+				if (fileLabelsListView.getItems().isEmpty()) {
 					removeFileButton.setVisible(false);
 					updateFileLVButton.setVisible(false);
 				}
 			}
 		});
 		
+		clearWebsiteButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent event) {
+				clearWebsiteInfo();
+			}
+		});
+		
+		clearFileButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent event) {
+				clearFileInfo();
+			}
+		});
+		
 		updateFileLVButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
-				String fileToUpdateName = appLabelsListView.getSelectionModel().getSelectedItem();
+				String fileToUpdateName = fileLabelsListView.getSelectionModel().getSelectedItem();
 				if (fileToUpdateName != null) {
 					addFileButton.setVisible(false);
 					addFileButton.setManaged(false);
-					updateAppPathButton.setVisible(true);
-					updateAppPathButton.setManaged(true);
-					int selectedIndex = appLabelsListView.getSelectionModel().getSelectedIndex();
+					updateFilePathButton.setVisible(true);
+					updateFilePathButton.setManaged(true);
+					int selectedIndex = fileLabelsListView.getSelectionModel().getSelectedIndex();
 					
 					FileChooser chooser = new FileChooser();
 					File file = chooser.showOpenDialog(primaryStage);
-					if (file != null && file.canExecute()) {
+					if (file != null) {
 						nonExecutable.setManaged(false);
 						nonExecutable.setVisible(false);
-						appPath.setText(file.getName());
+						filePath.setText(file.getName());
 						fileChosen = file;
 					} else {
 						nonExecutable.setManaged(true);
 						nonExecutable.setVisible(true);
 					}
-					updateAppPathButton.setOnAction(new EventHandler<ActionEvent>() {
+					updateFilePathButton.setOnAction(new EventHandler<ActionEvent>() {
 						@Override
 						public void handle(ActionEvent event) {
 							App tempApp = new App(fileChosen.getAbsolutePath(), fileChosen.getName());
-							appPath.clear();
-							appLabelsListView.getItems().remove(selectedIndex);
-							scriptApps.remove(selectedIndex);
-							scriptApps.add(selectedIndex, tempApp);
-							appLabelsListView.getItems().add(selectedIndex, tempApp.getLabel());
-							appLabelsListView.getSelectionModel().select(selectedIndex);
+							filePath.clear();
+							fileLabelsListView.getItems().remove(selectedIndex);
+							scriptFiles.remove(selectedIndex);
+							scriptFiles.add(selectedIndex, tempApp);
+							fileLabelsListView.getItems().add(selectedIndex, tempApp.getLabel());
+							fileLabelsListView.getSelectionModel().select(selectedIndex);
 
 							fileChosen = null;
-							updateAppPathButton.setVisible(false);
-							updateAppPathButton.setManaged(false);
+							updateFilePathButton.setVisible(false);
+							updateFilePathButton.setManaged(false);
 						}
 					});
 				}
@@ -215,11 +230,11 @@ public class ApplicationWindow extends Application {
 
 
 
-		appPathPane.getChildren().add(browseFilesButton);
+		filePathPane.getChildren().add(browseFilesButton);
 
 		addFileButton.setManaged(false);
 		addFileButton.setVisible(false);
-		appPathPane.getChildren().add(addFileButton);
+		filePathPane.getChildren().add(addFileButton);
 
 
 		removeWebsiteButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -250,6 +265,7 @@ public class ApplicationWindow extends Application {
 					websiteLabelWarning.setVisible(false);
 					removeWebsiteButton.setVisible(true);
 					updateWebsiteLVButton.setVisible(true);
+					clearWebsiteButton.setVisible(true);
 					String websiteName = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
 					Website website = new Website(websiteURL.getText(), websiteName);
 					scriptSites.add(website);
@@ -303,9 +319,9 @@ public class ApplicationWindow extends Application {
 		updateWebsiteURLButton.setManaged(false);
 		websiteURLPane.getChildren().add(updateWebsiteURLButton);
 		
-		updateAppPathButton.setVisible(false);
-		updateAppPathButton.setManaged(false);
-		appPathPane.getChildren().add(updateAppPathButton);
+		updateFilePathButton.setVisible(false);
+		updateFilePathButton.setManaged(false);
+		filePathPane.getChildren().add(updateFilePathButton);
 
 		websiteLabelWarning.setTextFill(Color.RED);
 		websiteLabelWarning.setManaged(false);
@@ -315,28 +331,32 @@ public class ApplicationWindow extends Application {
 		nonExecutable.setTextFill(Color.RED);
 		nonExecutable.setManaged(false);
 		nonExecutable.setVisible(false);
-		appPathPane.getChildren().add(nonExecutable);
+		filePathPane.getChildren().add(nonExecutable);
 
 		removeWebsiteButton.setVisible(false);
 		updateWebsiteLVButton.setVisible(false);
+		clearWebsiteButton.setVisible(false);
 		
 		removeFileButton.setVisible(false);
 		updateFileLVButton.setVisible(false);
+		clearFileButton.setVisible(false);
 		
 		BorderPane websiteOptionsPane = new BorderPane();
 		websiteOptionsPane.setTop(removeWebsiteButton);
-		websiteOptionsPane.setCenter(updateWebsiteLVButton);
+		websiteOptionsPane.setCenter(clearWebsiteButton);
+		websiteOptionsPane.setBottom(updateWebsiteLVButton);
 		websiteListPane.getChildren().add(websiteOptionsPane);
 		
-		BorderPane appOptionsPane = new BorderPane();
-		appOptionsPane.setTop(removeFileButton);
-		appOptionsPane.setCenter(updateFileLVButton);
-		appListPane.getChildren().add(appOptionsPane);
+		BorderPane fileOptionsPane = new BorderPane();
+		fileOptionsPane.setTop(removeFileButton);
+		fileOptionsPane.setCenter(clearFileButton);
+		fileOptionsPane.setBottom(updateFileLVButton);
+		fileListPane.getChildren().add(fileOptionsPane);
 
 
 		websiteURLPane.getChildren().add(websiteListPane);
 
-		appPathPane.getChildren().add(appListPane);
+		filePathPane.getChildren().add(fileListPane);
 
 
 
@@ -356,7 +376,7 @@ public class ApplicationWindow extends Application {
 
 
 		componentLayout.setTop(websiteURLPane);
-		componentLayout.setCenter(appPathPane);
+		componentLayout.setCenter(filePathPane);
 
 		submitButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -390,18 +410,8 @@ public class ApplicationWindow extends Application {
 
 								try {
 									createBatch();
-									websiteLabelsListView.getItems().clear();
-									appLabelsListView.getItems().clear();
-									scriptSites = new ArrayList<Website>();
-									scriptApps = new ArrayList<App>();
-									removeWebsiteButton.setVisible(false);
-									updateWebsiteLVButton.setVisible(false);
-									removeFileButton.setVisible(false);
-									updateWebsiteLVButton.setVisible(false);
-									updateWebsiteURLButton.setVisible(false);
-									addFileButton.setVisible(false);
-									appPath.clear();
-									websiteURL.clear();
+									clearWebsiteInfo();
+									clearFileInfo();
 									dialog.hide();
 
 								} catch (FileNotFoundException e) {
@@ -445,6 +455,26 @@ public class ApplicationWindow extends Application {
 
 		primaryStage.setResizable(false);
 	}
+	
+	public static void clearWebsiteInfo() {
+		websiteLabelsListView.getItems().clear();
+		scriptSites.clear();
+		removeWebsiteButton.setVisible(false);
+		updateWebsiteLVButton.setVisible(false);
+		clearWebsiteButton.setVisible(false);
+		websiteURL.clear();
+	}
+	
+	public static void clearFileInfo() {
+		fileLabelsListView.getItems().clear();
+		scriptFiles.clear();
+		removeFileButton.setVisible(false);
+		updateFileLVButton.setVisible(false);
+		updateFilePathButton.setVisible(false);
+		addFileButton.setVisible(false);
+		clearFileButton.setVisible(false);
+		filePath.clear();
+	}
 
 	public static boolean isWindows() {
 
@@ -462,6 +492,7 @@ public class ApplicationWindow extends Application {
 
 		if (isWindows()) {
 			File file=new File("C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".bat"); 
+			file.setReadable(false,false);
 			FileOutputStream fos=new FileOutputStream(file); 
 			DataOutputStream dos=new DataOutputStream(fos); 
 			String newLine = System.getProperty("line.separator");
@@ -477,7 +508,7 @@ public class ApplicationWindow extends Application {
 				file.setReadOnly();
 			}
 			
-			for (App currApp: scriptApps) {
+			for (App currApp: scriptFiles) {
 				dos.writeBytes("start " + currApp.getPath() + " " + currApp.getLabel()); 
 				dos.writeBytes(newLine);
 			}
@@ -508,11 +539,8 @@ public class ApplicationWindow extends Application {
 					dos.writeBytes(newLine);
 				}
 			}
-			for (App currApp: scriptApps) {
-				String currPath = currApp.getPath();
-				String next = currPath.replaceAll("\\s", "\\");
-				System.out.println(next);
-				dos.writeBytes("open " + next); 
+			for (App currApp: scriptFiles) {
+				dos.writeBytes("open '" + currApp.getPath() + "'"); 
 				dos.writeBytes(newLine);
 			}
 			dos.close();
