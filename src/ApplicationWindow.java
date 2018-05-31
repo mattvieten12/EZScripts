@@ -10,6 +10,10 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.aerofx.AeroFX;
+
+import com.aquafx_project.AquaFx;
+
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -78,7 +82,6 @@ public class ApplicationWindow extends Application {
 	//this is where we put the code for the user interface
 	@Override
 	public void start(Stage primaryStage) throws IOException {
-
 		scriptSites = new ArrayList<Website>();
 		scriptFiles = new ArrayList<App>();
 
@@ -450,10 +453,18 @@ public class ApplicationWindow extends Application {
 
 
 		Scene appScene = new Scene(componentLayout,500,500);
+		
+		if (isMac()) {
+			AquaFx.style();
+		} else if (isWindows()) {
+			AeroFX.style();
+		}
+		
 		primaryStage.setScene(appScene);
 		primaryStage.show();
 
 		primaryStage.setResizable(false);
+		
 	}
 	
 	public static void clearWebsiteInfo() {
