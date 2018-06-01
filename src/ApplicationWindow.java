@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.aerofx.AeroFX;
-
 import com.aquafx_project.AquaFx;
 
 import javafx.application.Application;
@@ -61,14 +59,14 @@ public class ApplicationWindow extends Application {
 	final static Button updateWebsiteLVButton = new Button("Update Selected");
 	final static Button addWebsiteButton = new Button("Add website!");
 	final static Button updateWebsiteURLButton = new Button("Update");
-	final static Button clearWebsiteButton = new Button("Clear All Websites");
+	final static Button clearWebsiteButton = new Button("Clear All Websites Added");
 	final static Button submitButton = new Button("Create Shortcut!");
 
 	final static Button browseFilesButton = new Button("Browse files...");
 	final static Button addFileButton = new Button("Add File!");
 	final static Button removeFileButton = new Button("Remove Selected");
 	final static Button updateFileLVButton = new Button("Update Selected");
-	final static Button clearFileButton = new Button("Clear All Files");
+	final static Button clearFileButton = new Button("Clear All Files Added");
 	final static Button updateFilePathButton = new Button("Update!");
 
 	private final static Label websiteLabelWarning = new Label("Website URLs must begin with https:// or http:// or ftp:// or file:// or www. to be valid");
@@ -130,7 +128,6 @@ public class ApplicationWindow extends Application {
 		websiteURLPane.getChildren().add(websiteURL);
 
 		filePathPane.getChildren().add(pathLabel);
-
 		filePathPane.getChildren().add(filePath);
 		
 		browseFilesButton.setOnAction(event -> {
@@ -172,6 +169,7 @@ public class ApplicationWindow extends Application {
 				}
 				if (fileLabelsListView.getItems().isEmpty()) {
 					removeFileButton.setVisible(false);
+					clearFileButton.setVisible(false);
 					updateFileLVButton.setVisible(false);
 				}
 			}
@@ -250,6 +248,7 @@ public class ApplicationWindow extends Application {
 				}
 				if (websiteLabelsListView.getItems().isEmpty()) {
 					removeWebsiteButton.setVisible(false);
+					clearWebsiteButton.setVisible(false);
 					updateWebsiteLVButton.setVisible(false);
 				}
 			}
@@ -457,7 +456,7 @@ public class ApplicationWindow extends Application {
 		if (isMac()) {
 			AquaFx.style();
 		} else if (isWindows()) {
-			AeroFX.style();
+			appScene.getStylesheets().add(getClass().getResource("listStyles.css").toExternalForm());
 		}
 		
 		primaryStage.setScene(appScene);
