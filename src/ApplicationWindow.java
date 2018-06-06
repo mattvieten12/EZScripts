@@ -3,7 +3,6 @@
 //could just import javafx.*
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,19 +17,22 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import mslinks.ShellLink;
 
 
 public class ApplicationWindow extends Application {
@@ -54,13 +56,13 @@ public class ApplicationWindow extends Application {
 	private static ListView<String> fileLabelsListView;
 
 	private static TextField scriptName;
-	
+
 	final static Button removeWebsiteButton = new Button("Remove Selected");
 	final static Button updateWebsiteLVButton = new Button("Update Selected");
 	final static Button addWebsiteButton = new Button("Add website!");
 	final static Button updateWebsiteURLButton = new Button("Update");
 	final static Button clearWebsiteButton = new Button("Clear All Websites Added");
-	final static Button submitButton = new Button("Create Shortcut!");
+	final static Button createScriptButton = new Button("Create Shortcut!");
 
 	final static Button browseFilesButton = new Button("Browse files...");
 	final static Button addFileButton = new Button("Add File!");
@@ -68,9 +70,11 @@ public class ApplicationWindow extends Application {
 	final static Button updateFileLVButton = new Button("Update Selected");
 	final static Button clearFileButton = new Button("Clear All Files Added");
 	final static Button updateFilePathButton = new Button("Update!");
+	final static Button popupCreateButton = new Button("CREATE!");
 
 	private final static Label websiteLabelWarning = new Label("Website URLs must begin with https:// or http:// or ftp:// or file:// or www. to be valid");
 	private final static Label nonExecutable = new Label("Please select a program executable!");
+	private final static Label fileAlreadyExistsWarning = new Label("File already exists, please select a different name.");
 	private final static String OS = System.getProperty("os.name").toLowerCase();
 
 	public static void main(String[] args) {
@@ -80,6 +84,7 @@ public class ApplicationWindow extends Application {
 	//this is where we put the code for the user interface
 	@Override
 	public void start(Stage primaryStage) throws IOException {
+		System.out.println(System.getProperty("user.home"));
 		scriptSites = new ArrayList<Website>();
 		scriptFiles = new ArrayList<App>();
 
@@ -115,6 +120,11 @@ public class ApplicationWindow extends Application {
 		BorderPane componentLayout = new BorderPane();
 		componentLayout.setPadding(new Insets(20,0,20,20));
 
+		TabPane tabPane = new TabPane();
+		Tab tab = new Tab();
+		tab.setText("new tab");
+		tab.setContent(new Rectangle(200,200, Color.LIGHTSTEELBLUE));
+		tabPane.getTabs().add(tab);
 
 		websiteURLPane = new FlowPane();
 		websiteURLPane.setHgap(10);
@@ -129,7 +139,8 @@ public class ApplicationWindow extends Application {
 
 		filePathPane.getChildren().add(pathLabel);
 		filePathPane.getChildren().add(filePath);
-		
+
+
 		browseFilesButton.setOnAction(event -> {
 			FileChooser chooser = new FileChooser();
 			File file = chooser.showOpenDialog(primaryStage);
@@ -150,6 +161,7 @@ public class ApplicationWindow extends Application {
 			@Override public void handle(ActionEvent event) {
 				scriptFiles.add(new App(fileChosen.getAbsolutePath(), fileChosen.getName()));
 				fileLabelsListView.getItems().add(fileChosen.getName());
+				fileLabelsListView.getSelectionModel().select(fileChosen.getName());
 				addFileButton.setManaged(false);
 				addFileButton.setVisible(false);
 				removeFileButton.setVisible(true);
@@ -174,19 +186,19 @@ public class ApplicationWindow extends Application {
 				}
 			}
 		});
-		
+
 		clearWebsiteButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
 				clearWebsiteInfo();
 			}
 		});
-		
+
 		clearFileButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
 				clearFileInfo();
 			}
 		});
-		
+
 		updateFileLVButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
 				String fileToUpdateName = fileLabelsListView.getSelectionModel().getSelectedItem();
@@ -196,7 +208,7 @@ public class ApplicationWindow extends Application {
 					updateFilePathButton.setVisible(true);
 					updateFilePathButton.setManaged(true);
 					int selectedIndex = fileLabelsListView.getSelectionModel().getSelectedIndex();
-					
+
 					FileChooser chooser = new FileChooser();
 					File file = chooser.showOpenDialog(primaryStage);
 					if (file != null) {
@@ -273,6 +285,7 @@ public class ApplicationWindow extends Application {
 					scriptSites.add(website);
 					websiteURL.clear();
 					websiteLabelsListView.getItems().addAll(website.getLabel());
+					websiteLabelsListView.getSelectionModel().select(website.getLabel());
 				}
 				else {
 					websiteLabelWarning.setManaged(true);
@@ -320,7 +333,7 @@ public class ApplicationWindow extends Application {
 		updateWebsiteURLButton.setVisible(false);
 		updateWebsiteURLButton.setManaged(false);
 		websiteURLPane.getChildren().add(updateWebsiteURLButton);
-		
+
 		updateFilePathButton.setVisible(false);
 		updateFilePathButton.setManaged(false);
 		filePathPane.getChildren().add(updateFilePathButton);
@@ -335,20 +348,24 @@ public class ApplicationWindow extends Application {
 		nonExecutable.setVisible(false);
 		filePathPane.getChildren().add(nonExecutable);
 
+		fileAlreadyExistsWarning.setTextFill(Color.RED);
+		fileAlreadyExistsWarning.setVisible(false);
+		fileAlreadyExistsWarning.setManaged(false);
+
 		removeWebsiteButton.setVisible(false);
 		updateWebsiteLVButton.setVisible(false);
 		clearWebsiteButton.setVisible(false);
-		
+
 		removeFileButton.setVisible(false);
 		updateFileLVButton.setVisible(false);
 		clearFileButton.setVisible(false);
-		
+
 		BorderPane websiteOptionsPane = new BorderPane();
 		websiteOptionsPane.setTop(removeWebsiteButton);
 		websiteOptionsPane.setCenter(clearWebsiteButton);
 		websiteOptionsPane.setBottom(updateWebsiteLVButton);
 		websiteListPane.getChildren().add(websiteOptionsPane);
-		
+
 		BorderPane fileOptionsPane = new BorderPane();
 		fileOptionsPane.setTop(removeFileButton);
 		fileOptionsPane.setCenter(clearFileButton);
@@ -360,52 +377,52 @@ public class ApplicationWindow extends Application {
 
 		filePathPane.getChildren().add(fileListPane);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 		componentLayout.setTop(websiteURLPane);
 		componentLayout.setCenter(filePathPane);
 
-		submitButton.setOnAction(new EventHandler<ActionEvent>() {
+		createScriptButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				if (scriptSites.isEmpty() == false) {
+				if (scriptSites.isEmpty() == false || scriptFiles.isEmpty() == false) {
 					final Stage dialog = new Stage();
+					dialog.setTitle("Script Name Confirmation");
 					dialog.initModality(Modality.APPLICATION_MODAL);
 					dialog.initOwner(primaryStage);
 					BorderPane popupPane = new BorderPane();
-					popupPane.getChildren().add(new Text("Script Generate Confirmation"));
-					Scene dialogScene = new Scene(popupPane, 300, 200);
+					Scene dialogScene = new Scene(popupPane, 350, 200);
 					dialog.setScene(dialogScene);
 					dialog.show();
 
 					scriptName = new TextField();
+					scriptName.setPrefWidth(250);
+					scriptName.setFont(new Font("Arial", 30));
+					scriptName.setOnAction(new EventHandler<ActionEvent>() {
+						@Override
+						public void handle(ActionEvent event) {
+							popupCreateButton.fire();
+						}
+					});
 					Label scriptNameLabel = new Label("Pick a name for your generated script!");
-
+					scriptNameLabel.setFont(new Font("Arial", 20));
+					scriptNameLabel.setPadding(new Insets(0, 0, 10, 0));
 					FlowPane scriptPane = new FlowPane();
 					scriptPane.getChildren().addAll(scriptNameLabel);
 					scriptPane.getChildren().addAll(scriptName);
-					popupPane.setCenter(scriptPane);
+					scriptPane.setAlignment(Pos.CENTER);
+					scriptPane.setPadding(new Insets(10, 0, 0, 0));
+					popupPane.setTop(scriptPane);
 
-					Button popupOKBtn = new Button("OK");
+					popupCreateButton.setFont(new Font("Arial", 50));
 
 					FlowPane bottomPane = new FlowPane();
+					FlowPane centerPane = new FlowPane();
+					centerPane.setAlignment(Pos.CENTER);
 
-					popupOKBtn.setOnAction(new EventHandler<ActionEvent>() {
+					if (isWindows()) {
+						dialogScene.getStylesheets().add(getClass().getResource("listStyles.css").toExternalForm());
+					}
+
+					popupCreateButton.setOnAction(new EventHandler<ActionEvent>() {
 						@Override
 						public void handle(ActionEvent event) {
 							if (scriptName != null) {
@@ -416,11 +433,6 @@ public class ApplicationWindow extends Application {
 									clearFileInfo();
 									dialog.hide();
 
-								} catch (FileNotFoundException e) {
-									Label label = new Label("File already exists, please select a different name.");
-									label.setTextFill(Color.RED);
-									bottomPane.getChildren().add(label);
-									popupPane.setBottom(bottomPane);
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
@@ -428,7 +440,15 @@ public class ApplicationWindow extends Application {
 						}
 					});
 
-					bottomPane.getChildren().add(popupOKBtn);
+
+
+					centerPane.getChildren().add(popupCreateButton);
+					bottomPane.getChildren().add(fileAlreadyExistsWarning);
+
+					fileAlreadyExistsWarning.setVisible(false);
+					fileAlreadyExistsWarning.setManaged(false);
+
+					popupPane.setCenter(centerPane);
 					popupPane.setBottom(bottomPane);
 				}
 			}
@@ -447,25 +467,25 @@ public class ApplicationWindow extends Application {
 
 
 		FlowPane bottomPane = new FlowPane();
-		bottomPane.getChildren().add(submitButton);
+		bottomPane.getChildren().add(createScriptButton);
 		componentLayout.setBottom(bottomPane);
 
 
-		Scene appScene = new Scene(componentLayout,500,500);
-		
+		Scene appScene = new Scene(componentLayout,400,500);
+
 		if (isMac()) {
 			AquaFx.style();
 		} else if (isWindows()) {
 			appScene.getStylesheets().add(getClass().getResource("listStyles.css").toExternalForm());
 		}
-		
+
 		primaryStage.setScene(appScene);
 		primaryStage.show();
 
 		primaryStage.setResizable(false);
-		
+
 	}
-	
+
 	public static void clearWebsiteInfo() {
 		websiteLabelsListView.getItems().clear();
 		scriptSites.clear();
@@ -474,7 +494,7 @@ public class ApplicationWindow extends Application {
 		clearWebsiteButton.setVisible(false);
 		websiteURL.clear();
 	}
-	
+
 	public static void clearFileInfo() {
 		fileLabelsListView.getItems().clear();
 		scriptFiles.clear();
@@ -498,33 +518,37 @@ public class ApplicationWindow extends Application {
 
 	}
 
-	public static void createBatch() throws IOException, FileNotFoundException { 
+	public static void createBatch() throws IOException { 
 
 		if (isWindows()) {
-			File file=new File("C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".bat"); 
-			file.setReadable(false,false);
-			FileOutputStream fos=new FileOutputStream(file); 
-			DataOutputStream dos=new DataOutputStream(fos); 
-			String newLine = System.getProperty("line.separator");
-			for (Website website: scriptSites) {
-				if (scriptSites.get(0) == website) {
-					dos.writeBytes("call start /w chrome.exe -new-window " + website.getURL()); 
+			File file=new File(System.getProperty("user.home") + "\\Desktop\\" + scriptName.getText() + ".bat"); 
+			if (file.isFile()) {
+				fileAlreadyExistsWarning.setVisible(true);
+				fileAlreadyExistsWarning.setManaged(true);
+			}
+			else {
+				file.setReadable(false,false);
+				FileOutputStream fos=new FileOutputStream(file); 
+				DataOutputStream dos=new DataOutputStream(fos); 
+				String newLine = System.getProperty("line.separator");
+				for (Website website: scriptSites) {
+					if (scriptSites.get(0) == website) {
+						dos.writeBytes("call start /w chrome.exe -new-window " + website.getURL()); 
+						dos.writeBytes(newLine);
+					}
+					else {
+						dos.writeBytes("call start /w chrome.exe " + website.getURL()); 
+						dos.writeBytes(newLine);
+					}
+				}
+
+				for (App currApp: scriptFiles) {
+					dos.writeBytes("\"" + currApp.getPath() + "\""); 
 					dos.writeBytes(newLine);
 				}
-				else {
-					dos.writeBytes("call start /w chrome.exe " + website.getURL()); 
-					dos.writeBytes(newLine);
-				}
-				file.setReadOnly();
+				dos.close();
+				fos.close();
 			}
-			
-			for (App currApp: scriptFiles) {
-				dos.writeBytes("start " + currApp.getPath() + " " + currApp.getLabel()); 
-				dos.writeBytes(newLine);
-			}
-			dos.close();
-			fos.close();
-			ShellLink.createLink("C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".bat", "C:\\Users\\Public\\Desktop\\" + scriptName.getText() + ".lnk");
 		} else if (isMac()) {
 			File file = new File(System.getProperty("user.home") + "/Desktop/" + scriptName.getText() + ".command"); 
 			FileOutputStream fos=new FileOutputStream(file); 
@@ -553,6 +577,7 @@ public class ApplicationWindow extends Application {
 				dos.writeBytes("open '" + currApp.getPath() + "'"); 
 				dos.writeBytes(newLine);
 			}
+			file.setReadOnly();
 			dos.close();
 			fos.close();
 			file.setExecutable(true);
