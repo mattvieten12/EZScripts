@@ -9,10 +9,6 @@ public class Website {
 		this.label = label;
 	}
 	
-	public Website(String url) {
-		this(url, null);
-	}
-	
 	public String getURL() {
 		return url;
 	}
