@@ -23,6 +23,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Tab;
@@ -47,8 +48,12 @@ public class ApplicationWindow extends Application {
 
 	private static File fileChosen;
 
+	private static ComboBox<String> websiteBrowsers;
+	private static String browserChosen;
+
 	private static TabPane tabPane;
 	private static Tab createTab;
+	private static Tab updateTab;
 
 	private static FlowPane websiteListPane;
 	private static FlowPane fileListPane;
@@ -87,6 +92,8 @@ public class ApplicationWindow extends Application {
 	private final static Label fileAlreadyExistsWarning = new Label("File already exists, please select a different name.");
 	private final static String regex = "^(((https?|ftp|file)://)|(www.))[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
 	private final static String OS = System.getProperty("os.name").toLowerCase();
+	private final static String batchWebsiteSection = new String("::Website Section");
+	private final static String batchFileSection = new String("::File Section");
 
 	public static void main(String[] args) {
 		launch(args);
@@ -95,6 +102,7 @@ public class ApplicationWindow extends Application {
 	//this is where we put the code for the user interface
 	@Override
 	public void start(Stage stage) throws IOException {	
+
 		scriptSites = new ArrayList<Website>();
 		scriptFiles = new ArrayList<App>();
 
@@ -120,6 +128,15 @@ public class ApplicationWindow extends Application {
 				addFileButton.fire();
 			}
 		});
+
+		websiteBrowsers = new ComboBox<String>();
+		ArrayList<String> browserOptions = new ArrayList<String>();
+		browserOptions.add("Google Chrome");
+		browserOptions.add("Internet Explorer");
+		browserOptions.add("FireFox");
+		websiteBrowsers.getItems().addAll(browserOptions);
+		websiteBrowsers.getSelectionModel().selectFirst();
+
 
 		websiteLabelsListView = new ListView<String>();
 		fileLabelsListView = new ListView<String>();
@@ -150,7 +167,7 @@ public class ApplicationWindow extends Application {
 		createTab = new Tab();
 		createTab.setText("Create New Script");
 		tabPane.getTabs().add(createTab);
-		Tab updateTab = new Tab();
+		updateTab = new Tab();
 		updateTab.setText("Update Old Script");
 		tabPane.getTabs().add(updateTab);
 		appLayout.setTop(tabPane);
@@ -241,6 +258,7 @@ public class ApplicationWindow extends Application {
 		});
 
 		websiteURLPane.getChildren().add(addWebsiteButton);
+		websiteURLPane.getChildren().add(websiteBrowsers);
 
 		updateWebsiteLVButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
@@ -348,7 +366,7 @@ public class ApplicationWindow extends Application {
 					centerPane.setAlignment(Pos.CENTER);
 
 					if (isWindows()) {
-						dialogScene.getStylesheets().add(getClass().getResource("listStyles.css").toExternalForm());
+						dialogScene.getStylesheets().add(getClass().getResource("windowsStyles.css").toExternalForm());
 					}
 
 					popupCreateButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -398,11 +416,11 @@ public class ApplicationWindow extends Application {
 
 		if (isMac()) {
 			appScene = new Scene(appLayout, 475, 550);
-			//AquaFx.style();
+			AquaFx.style();
 
 		} else if (isWindows()) {
-			appScene = new Scene(appLayout,400,500);
-			appScene.getStylesheets().add(getClass().getResource("listStyles.css").toExternalForm());
+			appScene = new Scene(appLayout,425,500);
+			appScene.getStylesheets().add(getClass().getResource("windowsStyles.css").toExternalForm());
 		}
 
 
@@ -607,17 +625,34 @@ public class ApplicationWindow extends Application {
 				FileOutputStream fos=new FileOutputStream(file);
 				DataOutputStream dos=new DataOutputStream(fos);
 				String newLine = System.getProperty("line.separator");
+				browserChosen = websiteBrowsers.getSelectionModel().getSelectedItem();
+				String browserEXE = new String();
+				if (browserChosen == "Google Chrome") {
+					browserEXE = "chrome.exe";
+				}
+				else if (browserChosen == "FireFox") {
+					browserEXE = "firefox.exe";
+				}
+				else if (browserChosen == "Internet Explorer")
+					if (scriptSites.isEmpty() == false) {
+						dos.writeBytes(batchWebsiteSection);
+						dos.writeBytes(newLine);
+					}
 				for (Website website: scriptSites) {
 					if (scriptSites.get(0) == website) {
-						dos.writeBytes("call start /w chrome.exe -new-window " + website.getURL());
+						dos.writeBytes("call start /w " + browserEXE + " -new-window " + website.getURL());
 						dos.writeBytes(newLine);
 					}
 					else {
-						dos.writeBytes("call start /w chrome.exe " + website.getURL()); 
+						dos.writeBytes("call start /w " + browserEXE + " " + website.getURL()); 
 						dos.writeBytes(newLine);
 					}
 				}
 
+				if (scriptFiles.isEmpty() == false) {
+					dos.writeBytes(batchFileSection);
+					dos.writeBytes(newLine);
+				}
 				for (App currApp: scriptFiles) {
 					dos.writeBytes("\"" + currApp.getPath() + "\"");
 					dos.writeBytes(newLine);
@@ -680,6 +715,27 @@ public class ApplicationWindow extends Application {
 		Scanner sc = new Scanner(file);
 		while (sc.hasNextLine()) {
 			String currLine = sc.nextLine();
+			if (currLine.equals(batchWebsiteSection)) {
+				String[] lineSections = currLine.split(" ");
+				if (lineSections[3].equals("chrome.exe")) {
+					browserChosen = "Google Chrome";
+				}
+				else if (lineSections[3].equals("firefox.exe")) {
+					browserChosen = "FireFox";
+				}
+				else if (lineSections[3].equals("Internet Explorer")) {
+					browserChosen = "Internet Explorer";
+				}
+				String url = lineSections[lineSections.length - 1];
+				String label = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+				scriptSites.add(new Website(url, label));
+			}
+			else if (currLine.equals(batchFileSection)) {
+				String[] lineSections = currLine.split("\"");
+				String path = lineSections[1];
+				String label = path.split("\\")[path.split("\\").length - 1];
+				scriptFiles.add(new App(path, label));
+			}
 		}
 		sc.close();
 	}
