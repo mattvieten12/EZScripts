@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -47,6 +48,7 @@ public class ApplicationWindow extends Application {
 	private static TextField filePath;
 
 	private static File fileChosen;
+	private static File fileToUpdate;
 
 	private static ComboBox<String> websiteBrowsers;
 	private static String browserChosen;
@@ -75,7 +77,7 @@ public class ApplicationWindow extends Application {
 	final static Button removeWebsiteButton = new Button("Remove Website");
 	final static Button updateWebsiteLVButton = new Button("Update Website");
 	final static Button addWebsiteButton = new Button("Add website!");
-	final static Button updateWebsiteURLButton = new Button("Update");
+	final static Button updateWebsiteURLButton = new Button("Update Website!");
 	final static Button clearWebsiteButton = new Button("Clear All Websites");
 	final static Button createScriptButton = new Button("Create Shortcut!");
 
@@ -87,8 +89,10 @@ public class ApplicationWindow extends Application {
 	final static Button updateFilePathButton = new Button("Update!");
 	final static Button popupCreateButton = new Button("CREATE!");
 
+	final static Button updateScriptButton = new Button(("Update Script!"));
+
 	private final static Label websiteLabelWarning = new Label("Website URLs must begin with https:// or http:// or ftp:// or file:// or www. to be valid");
-	private final static Label nonExecutable = new Label("Please select a program executable!");
+	private final static Label nonExecutableWarning = new Label("Please select a program executable!");
 	private final static Label fileAlreadyExistsWarning = new Label("File already exists, please select a different name.");
 	private final static String regex = "^(((https?|ftp|file)://)|(www.))[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
 	private final static String OS = System.getProperty("os.name").toLowerCase();
@@ -132,7 +136,7 @@ public class ApplicationWindow extends Application {
 		websiteBrowsers = new ComboBox<String>();
 		ArrayList<String> browserOptions = new ArrayList<String>();
 		browserOptions.add("Google Chrome");
-		browserOptions.add("Internet Explorer");
+		//browserOptions.add("Internet Explorer");
 		browserOptions.add("FireFox");
 		websiteBrowsers.getItems().addAll(browserOptions);
 		websiteBrowsers.getSelectionModel().selectFirst();
@@ -175,7 +179,19 @@ public class ApplicationWindow extends Application {
 		updateTab.setOnSelectionChanged(new EventHandler<Event>() {
 			@Override
 			public void handle(Event t) {
+				FileChooser chooser = new FileChooser();
+				File file = chooser.showOpenDialog(primaryStage);
+				fileToUpdate = file;
+				try {
+					clearWebsites();
+					clearFiles();
+					readScript(file);
+					websiteBrowsers.getSelectionModel().select(browserChosen);
+					tabPane.getSelectionModel().select(createTab);
 
+				} catch (FileNotFoundException e) {
+
+				}
 			}
 		});
 
@@ -253,11 +269,32 @@ public class ApplicationWindow extends Application {
 		addWebsiteButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				addWebsite();	
+				if (websiteURL.getText() != null) {
+					Pattern p = Pattern.compile(regex);
+					Matcher m = p.matcher(websiteURL.getText());	
+					if (m.find()) {
+						String websiteName = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+						Website website = new Website(websiteURL.getText(), websiteName);
+						addWebsite(website);
+					}
+					else {
+						websiteLabelWarning.setManaged(true);
+						websiteLabelWarning.setVisible(true);
+					}
+				}
+				else {
+					websiteLabelWarning.setManaged(true);
+					websiteLabelWarning.setVisible(true);
+				}
 			}
 		});
 
 		websiteURLPane.getChildren().add(addWebsiteButton);
+		
+		updateWebsiteURLButton.setVisible(false);
+		updateWebsiteURLButton.setManaged(false);
+		websiteURLPane.getChildren().add(updateWebsiteURLButton);
+		
 		websiteURLPane.getChildren().add(websiteBrowsers);
 
 		updateWebsiteLVButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -266,9 +303,11 @@ public class ApplicationWindow extends Application {
 			}
 		});
 
-		updateWebsiteURLButton.setVisible(false);
-		updateWebsiteURLButton.setManaged(false);
-		websiteURLPane.getChildren().add(updateWebsiteURLButton);
+		updateScriptButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override public void handle(ActionEvent event) {
+				updateScript();
+			}
+		});
 
 		updateFilePathButton.setVisible(false);
 		updateFilePathButton.setManaged(false);
@@ -279,10 +318,10 @@ public class ApplicationWindow extends Application {
 		websiteLabelWarning.setVisible(false);
 		websiteURLPane.getChildren().add(websiteLabelWarning);
 
-		nonExecutable.setTextFill(Color.RED);
-		nonExecutable.setManaged(false);
-		nonExecutable.setVisible(false);
-		filePathPane.getChildren().add(nonExecutable);
+		nonExecutableWarning.setTextFill(Color.RED);
+		nonExecutableWarning.setManaged(false);
+		nonExecutableWarning.setVisible(false);
+		filePathPane.getChildren().add(nonExecutableWarning);
 
 		fileAlreadyExistsWarning.setTextFill(Color.RED);
 		fileAlreadyExistsWarning.setVisible(false);
@@ -325,6 +364,10 @@ public class ApplicationWindow extends Application {
 
 		FlowPane bottomPane = new FlowPane();
 		bottomPane.getChildren().add(createScriptButton);
+		bottomPane.getChildren().add(updateScriptButton);
+
+		updateScriptButton.setVisible(false);
+		updateScriptButton.setManaged(false);
 		componentLayout.setBottom(bottomPane);
 
 		createScriptButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -375,7 +418,20 @@ public class ApplicationWindow extends Application {
 							if (scriptName != null) {
 
 								try {
-									createScript();
+									File file = null;
+									if (isWindows()) {
+										file=new File(System.getProperty("user.home") + "\\Desktop\\" + scriptName.getText() + ".bat");
+									}
+									else if (isMac()) {
+										file = new File(System.getProperty("user.home") + "/Desktop/" + scriptName.getText() + ".command"); 
+									}
+									if (file.isFile()) {
+										fileAlreadyExistsWarning.setVisible(true);
+										fileAlreadyExistsWarning.setManaged(true);
+									}
+									else {
+										createScript(file);
+									}
 									clearWebsites();
 									clearFiles();
 									dialog.hide();
@@ -419,7 +475,7 @@ public class ApplicationWindow extends Application {
 			AquaFx.style();
 
 		} else if (isWindows()) {
-			appScene = new Scene(appLayout,425,500);
+			appScene = new Scene(appLayout,440,560);
 			appScene.getStylesheets().add(getClass().getResource("windowsStyles.css").toExternalForm());
 		}
 
@@ -431,29 +487,21 @@ public class ApplicationWindow extends Application {
 		stage.show();
 		stage.setResizable(false);
 		primaryStage = stage;
+		
+		websiteURL.requestFocus();
 	}
 
-	public static void addWebsite() {
-		String websiteName = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
-		Website website = new Website(websiteURL.getText(), websiteName);
-		Pattern p = Pattern.compile(regex);
-		Matcher m = p.matcher(website.getURL());	
-		if (website.getURL() != null && m.find()) {
-			websiteLabelWarning.setManaged(false);
-			websiteLabelWarning.setVisible(false);
-			removeWebsiteButton.setVisible(true);
-			updateWebsiteLVButton.setVisible(true);
-			clearWebsiteButton.setVisible(true);
-			scriptSites.add(website);
-			websiteURL.clear();
-			websiteLabelsListView.getItems().addAll(website.getLabel());
-			websiteLabelsListView.getSelectionModel().select(website.getLabel());
-			websiteURL.requestFocus();
-		}
-		else {
-			websiteLabelWarning.setManaged(true);
-			websiteLabelWarning.setVisible(true);
-		}
+	public static void addWebsite(Website website) {
+		websiteLabelWarning.setManaged(false);
+		websiteLabelWarning.setVisible(false);
+		removeWebsiteButton.setVisible(true);
+		updateWebsiteLVButton.setVisible(true);
+		clearWebsiteButton.setVisible(true);
+		scriptSites.add(website);
+		websiteURL.clear();
+		websiteLabelsListView.getItems().addAll(website.getLabel());
+		websiteLabelsListView.getSelectionModel().selectLast();
+		websiteURL.requestFocus();
 	}
 
 	public static void removeWebsite() {
@@ -507,12 +555,14 @@ public class ApplicationWindow extends Application {
 		updateWebsiteLVButton.setVisible(false);
 		clearWebsiteButton.setVisible(false);
 		websiteURL.clear();
+		websiteLabelWarning.setVisible(false);
+		websiteLabelWarning.setManaged(false);
 	}
 
 	public static void addFile() {
 		scriptFiles.add(new App(fileChosen.getAbsolutePath(), fileChosen.getName()));
 		fileLabelsListView.getItems().add(fileChosen.getName());
-		fileLabelsListView.getSelectionModel().select(fileChosen.getName());
+		fileLabelsListView.getSelectionModel().selectLast();
 		fileLabelsListView.requestFocus();
 		addFileButton.setManaged(false);
 		addFileButton.setVisible(false);
@@ -541,18 +591,19 @@ public class ApplicationWindow extends Application {
 		if (fileToUpdateName != null) {
 			addFileButton.setVisible(false);
 			addFileButton.setManaged(false);
-			updateFilePathButton.setVisible(true);
-			updateFilePathButton.setManaged(true);
+
 			FileChooser chooser = new FileChooser();
 			File file = chooser.showOpenDialog(primaryStage);
 			if (file != null) {
-				nonExecutable.setManaged(false);
-				nonExecutable.setVisible(false);
+				updateFilePathButton.setVisible(true);
+				updateFilePathButton.setManaged(true);
+				nonExecutableWarning.setManaged(false);
+				nonExecutableWarning.setVisible(false);
 				filePath.setText(file.getName());
 				fileChosen = file;
 			} else {
-				nonExecutable.setManaged(true);
-				nonExecutable.setVisible(true);
+				nonExecutableWarning.setManaged(true);
+				nonExecutableWarning.setVisible(true);
 			}
 		}
 	}
@@ -561,16 +612,16 @@ public class ApplicationWindow extends Application {
 		FileChooser chooser = new FileChooser();
 		File file = chooser.showOpenDialog(primaryStage);
 		if (file != null) {
-			nonExecutable.setManaged(false);
-			nonExecutable.setVisible(false);
+			nonExecutableWarning.setManaged(false);
+			nonExecutableWarning.setVisible(false);
 			filePath.setText(file.getName());
 			fileChosen = file;
 			addFileButton.setManaged(true);
 			addFileButton.setVisible(true);
 			filePath.requestFocus();
 		} else {
-			nonExecutable.setManaged(true);
-			nonExecutable.setVisible(true);
+			nonExecutableWarning.setManaged(true);
+			nonExecutableWarning.setVisible(true);
 		}
 	}
 
@@ -598,6 +649,8 @@ public class ApplicationWindow extends Application {
 		addFileButton.setVisible(false);
 		clearFileButton.setVisible(false);
 		filePath.clear();
+		nonExecutableWarning.setVisible(false);
+		nonExecutableWarning.setManaged(false);
 	}
 
 	public static boolean isWindows() {
@@ -612,56 +665,50 @@ public class ApplicationWindow extends Application {
 
 	}
 
-	public static void createScript() throws IOException {
+	public static void createScript(File file) throws IOException {
 
 		if (isWindows()) {
-			File file=new File(System.getProperty("user.home") + "\\Desktop\\" + scriptName.getText() + ".bat");
-			if (file.isFile()) {
-				fileAlreadyExistsWarning.setVisible(true);
-				fileAlreadyExistsWarning.setManaged(true);
+			file.setReadable(false,false);
+			FileOutputStream fos=new FileOutputStream(file);
+			DataOutputStream dos=new DataOutputStream(fos);
+			String newLine = System.getProperty("line.separator");
+			browserChosen = websiteBrowsers.getSelectionModel().getSelectedItem();
+			String browserEXE = new String();
+			if (browserChosen == "Google Chrome") {
+				browserEXE = "chrome.exe";
 			}
-			else {
-				file.setReadable(false,false);
-				FileOutputStream fos=new FileOutputStream(file);
-				DataOutputStream dos=new DataOutputStream(fos);
-				String newLine = System.getProperty("line.separator");
-				browserChosen = websiteBrowsers.getSelectionModel().getSelectedItem();
-				String browserEXE = new String();
-				if (browserChosen == "Google Chrome") {
-					browserEXE = "chrome.exe";
-				}
-				else if (browserChosen == "FireFox") {
-					browserEXE = "firefox.exe";
-				}
-				else if (browserChosen == "Internet Explorer")
-					if (scriptSites.isEmpty() == false) {
-						dos.writeBytes(batchWebsiteSection);
-						dos.writeBytes(newLine);
-					}
-				for (Website website: scriptSites) {
-					if (scriptSites.get(0) == website) {
-						dos.writeBytes("call start /w " + browserEXE + " -new-window " + website.getURL());
-						dos.writeBytes(newLine);
-					}
-					else {
-						dos.writeBytes("call start /w " + browserEXE + " " + website.getURL()); 
-						dos.writeBytes(newLine);
-					}
-				}
+			else if (browserChosen == "FireFox") {
+				browserEXE = "firefox.exe";
+			}
+			/*else if (browserChosen == "Internet Explorer") {
 
-				if (scriptFiles.isEmpty() == false) {
-					dos.writeBytes(batchFileSection);
-					dos.writeBytes(newLine);
-				}
-				for (App currApp: scriptFiles) {
-					dos.writeBytes("\"" + currApp.getPath() + "\"");
-					dos.writeBytes(newLine);
-				}
-				dos.close();
-				fos.close();
+				}*/
+			if (scriptSites.isEmpty() == false) {
+				dos.writeBytes(batchWebsiteSection);
+				dos.writeBytes(newLine);
 			}
+			for (Website website: scriptSites) {
+				if (scriptSites.get(0) == website) {
+					dos.writeBytes("call start /w " + browserEXE + " -new-window " + website.getURL());
+					dos.writeBytes(newLine);
+				}
+				else {
+					dos.writeBytes("call start /w " + browserEXE + " " + website.getURL()); 
+					dos.writeBytes(newLine);
+				}
+			}
+
+			if (scriptFiles.isEmpty() == false) {
+				dos.writeBytes(batchFileSection);
+				dos.writeBytes(newLine);
+			}
+			for (App currApp: scriptFiles) {
+				dos.writeBytes("\"" + currApp.getPath() + "\"");
+				dos.writeBytes(newLine);
+			}
+			dos.close();
+			fos.close();
 		} else if (isMac()) {
-			File file = new File(System.getProperty("user.home") + "/Desktop/" + scriptName.getText() + ".command"); 
 			FileOutputStream fos=new FileOutputStream(file); 
 			DataOutputStream dos=new DataOutputStream(fos); 
 			String newLine = System.getProperty("line.separator");
@@ -700,43 +747,66 @@ public class ApplicationWindow extends Application {
 		}
 	}
 
-	public static void editScript(ArrayList<Website> websites, ArrayList<App> files) throws IOException { 
-		if (websites.isEmpty() == false ) {
-			for (Website currWebsite: websites) {
-				websiteLabelsListView.getItems().add(currWebsite.getLabel());
+	public static void readScript(File file) throws FileNotFoundException {
+		if (file != null) {
+			Scanner sc = new Scanner(file);
+			if (sc.hasNextLine()) {
+				String currLine = sc.nextLine();
+				if (currLine.equals(batchWebsiteSection)) {
+					if (sc.hasNextLine()) {
+						currLine = sc.nextLine();
+					}
+					while (currLine.startsWith("call")) {
+						String[] lineSections = currLine.split(" ");
+						if (lineSections[3].equals("chrome.exe")) {
+							browserChosen = "Google Chrome";
+						}
+						else if (lineSections[3].equals("firefox.exe")) {
+							browserChosen = "FireFox";
+						}
+						/*else if (lineSections[3].equals("Internet Explorer")) {
+					browserChosen = "Internet Explorer";
+					}*/
+						String url = lineSections[lineSections.length - 1];
+						String label = url.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+						addWebsite(new Website(url, label));
+						if (sc.hasNextLine()) {
+							currLine = sc.nextLine();
+						}
+					}
+				}
+				if (currLine.equals(batchFileSection)) {
+					while (sc.hasNextLine()) {
+						currLine = sc.nextLine();
+						String[] lineSections = currLine.split("\"");
+						String path = lineSections[1];
+						fileChosen = new File(path);
+						addFile();
+					}
+				}
 			}
-			scriptSites = websites;
-			scriptFiles = files;
-
+			sc.close();
 		}
+		createScriptButton.setVisible(false);
+		createScriptButton.setManaged(false);
+		updateScriptButton.setVisible(true);
+		updateScriptButton.setManaged(true);
 	}
 
-	public static void readScript(File file) throws FileNotFoundException {
-		Scanner sc = new Scanner(file);
-		while (sc.hasNextLine()) {
-			String currLine = sc.nextLine();
-			if (currLine.equals(batchWebsiteSection)) {
-				String[] lineSections = currLine.split(" ");
-				if (lineSections[3].equals("chrome.exe")) {
-					browserChosen = "Google Chrome";
-				}
-				else if (lineSections[3].equals("firefox.exe")) {
-					browserChosen = "FireFox";
-				}
-				else if (lineSections[3].equals("Internet Explorer")) {
-					browserChosen = "Internet Explorer";
-				}
-				String url = lineSections[lineSections.length - 1];
-				String label = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
-				scriptSites.add(new Website(url, label));
-			}
-			else if (currLine.equals(batchFileSection)) {
-				String[] lineSections = currLine.split("\"");
-				String path = lineSections[1];
-				String label = path.split("\\")[path.split("\\").length - 1];
-				scriptFiles.add(new App(path, label));
-			}
+	public void updateScript() {
+		try {
+			PrintWriter writer = new PrintWriter(fileToUpdate);
+			writer.print("");
+			writer.close();
+			createScript(fileToUpdate);
+		} catch (IOException e) {
+
 		}
-		sc.close();
+		clearFiles();
+		clearWebsites();
+		updateScriptButton.setVisible(false);
+		updateScriptButton.setManaged(false);
+		createScriptButton.setVisible(true);
+		createScriptButton.setManaged(true);
 	}
 }
