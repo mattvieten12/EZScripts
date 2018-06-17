@@ -1,11 +1,14 @@
 Easy-Script-Generator
 
-GUI interface that allows users to create (export) scripts with no scripting knowledge. These scripts will help them run multiple computer programs or webpages (or both) from generated batch files. When the program is run, it will generate a .bat file that will execute all of the specified programs/web pages. That bat file will also have a .lnk shortcut created which will be placed on the user's Desktop and will allow them to double click the batch shortcut and execute multiple programs at once in order to save time in the long run.
+GUI interface that allows users to create (export) scripts with no scripting knowledge. These scripts will help them run multiple computer programs or web pages (or both) from generated script files. When the program is run, it will generate a '.bat' or '.command' file that will execute all of the specified programs/web pages.
+
+The best part about this application is it will work on Mac or Windows.
 
 Example Use Cases:
 
-A user has 5 or 6 tabs that they log into everyday they go home (i.e. Facebook, Youtube, Gmail, and 2 reddit pages). This will allow them to double click a shortcut icon and open all tabs up at once. a. A future feature will be to fully log them into these as well.
+A student has English, Math, Science, and a History class. In order to complete their math class they need 3 school websites open, calculator application open, their math syllabus open in Microsoft Word, as well as a formula cheat sheet open in Microsoft Word.
+This will allow the user to input the websites and pick those files to be opened whenever the script file is double clicked or opened on their desktop. This will be a major time save to those who use the same websites and applications to complete their work over a long time period. Input the information once into this application and never have to manually go to all of those sites and open all of those applications and websites again. Input the name "Math_Class" for your script name and now you have generated a Math class specific script on your desktop ready to go. The same process can be done again for each of the other 3 classes.
 
-Different types of needs. For instance, as stated above everyday leisure usage on a computer could be a generated script, but maybe a student has homework needs. This could open up their school email, Eclipse for a Java programming assignment, Microsoft Word for an essay or perhaps opening a specific document that they always need for homework such as a syllabus, and then finally Spotify for them to listen to music while they work.
+A leisure use case could be somebody who goes home and immediately turns on Spotify, opens Skype to talk to one of their friends. They may open Messages (on a Mac) as well. Then for websites they may open Youtube, Facebook, Gmail, and their favorite reddit pages. Now instead of individually doing all of these steps they can just simply input that information into the script generator and it will put a script file on their desktop ready to be double clicked and will launch everything instantly.
 
-Time is a precious resource, and should be better utilized not doing mundane tasks day in and day out.
+Time is a precious resource, and should be better utilized not doing mundane tasks like opening applications and websites day in and day out in a repeated process. 

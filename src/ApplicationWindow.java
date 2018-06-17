@@ -92,10 +92,10 @@ public class ApplicationWindow extends Application {
 
 	final static Button updateScriptButton = new Button(("Update Script!"));
 
-	private final static Label websiteLabelWarning = new Label("Website URLs must begin with https:// or http:// or ftp:// or file:// or www. to be valid");
+	private final static Label websiteLabelWarning = new Label("Invalid URL, please check that the url is correct.");
 	private final static Label nonExecutableWarning = new Label("Please select a program executable!");
 	private final static Label fileAlreadyExistsWarning = new Label("File already exists, please select a different name.");
-	private final static String regex = "^(((https?|ftp|file)://)|(www.))[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
+	private final static String regex = "^(http:\\/\\/www\\.|https:\\/\\/www\\.|http:\\/\\/|https:\\/\\/)?[a-z0-9]+([\\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(:[0-9]{1,5})?(\\/.*)?$";
 	private final static String OS = System.getProperty("os.name").toLowerCase();
 	private final static String batchWebsiteSection = new String("::Website Section");
 	private final static String batchFileSection = new String("::File Section");
