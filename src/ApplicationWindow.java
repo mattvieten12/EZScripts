@@ -37,6 +37,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -98,6 +99,8 @@ public class ApplicationWindow extends Application {
 	private final static String OS = System.getProperty("os.name").toLowerCase();
 	private final static String batchWebsiteSection = new String("::Website Section");
 	private final static String batchFileSection = new String("::File Section");
+	private final static String bashWebsiteSection = new String("#Website Section");
+	private final static String bashFileSection = new String("#File Section");
 
 	public static void main(String[] args) {
 		launch(args);
@@ -176,24 +179,7 @@ public class ApplicationWindow extends Application {
 		tabPane.getTabs().add(updateTab);
 		appLayout.setTop(tabPane);
 
-		updateTab.setOnSelectionChanged(new EventHandler<Event>() {
-			@Override
-			public void handle(Event t) {
-				FileChooser chooser = new FileChooser();
-				File file = chooser.showOpenDialog(primaryStage);
-				fileToUpdate = file;
-				try {
-					clearWebsites();
-					clearFiles();
-					readScript(file);
-					websiteBrowsers.getSelectionModel().select(browserChosen);
-					tabPane.getSelectionModel().select(createTab);
-
-				} catch (FileNotFoundException e) {
-
-				}
-			}
-		});
+		setUpdateTabEvent();
 
 		websiteURLPane = new FlowPane();
 		websiteURLPane.setHgap(10);
@@ -290,11 +276,11 @@ public class ApplicationWindow extends Application {
 		});
 
 		websiteURLPane.getChildren().add(addWebsiteButton);
-		
+
 		updateWebsiteURLButton.setVisible(false);
 		updateWebsiteURLButton.setManaged(false);
 		websiteURLPane.getChildren().add(updateWebsiteURLButton);
-		
+
 		websiteURLPane.getChildren().add(websiteBrowsers);
 
 		updateWebsiteLVButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -305,6 +291,10 @@ public class ApplicationWindow extends Application {
 
 		updateScriptButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
+				createTab.setDisable(false);
+				updateTab.setOnSelectionChanged(null);
+				tabPane.getSelectionModel().select(createTab);
+				setUpdateTabEvent();
 				updateScript();
 			}
 		});
@@ -471,8 +461,8 @@ public class ApplicationWindow extends Application {
 		appLayout.setCenter(componentLayout);
 
 		if (isMac()) {
-			appScene = new Scene(appLayout, 475, 550);
-			AquaFx.style();
+			appScene = new Scene(appLayout, 575, 600);
+			//AquaFx.style();
 
 		} else if (isWindows()) {
 			appScene = new Scene(appLayout,440,560);
@@ -487,8 +477,42 @@ public class ApplicationWindow extends Application {
 		stage.show();
 		stage.setResizable(false);
 		primaryStage = stage;
-		
+
 		websiteURL.requestFocus();
+	}
+
+	public static void setUpdateTabEvent() {
+		updateTab.setOnSelectionChanged(new EventHandler<Event>() {
+			@Override
+			public void handle(Event t) {
+				FileChooser chooser = new FileChooser();
+				if (isWindows()) {
+					ExtensionFilter filter = new ExtensionFilter("Script Files", "*.bat");
+					chooser.getExtensionFilters().add(filter);
+				}
+				else if (isMac()) {
+					ExtensionFilter filter = new ExtensionFilter("Script Files", "*.command");
+					chooser.getExtensionFilters().add(filter);
+				}
+				File file = chooser.showOpenDialog(primaryStage);
+				if (file != null) {
+					fileToUpdate = file;
+					try {
+						clearWebsites();
+						clearFiles();
+						readScript(file);
+						websiteBrowsers.getSelectionModel().select(browserChosen);
+						createTab.setDisable(true);
+
+					} catch (FileNotFoundException e) {
+
+					}
+				}
+				else {
+					tabPane.getSelectionModel().select(createTab);
+				}
+			}
+		});
 	}
 
 	public static void addWebsite(Website website) {
@@ -666,14 +690,12 @@ public class ApplicationWindow extends Application {
 	}
 
 	public static void createScript(File file) throws IOException {
-
+		FileOutputStream fos=new FileOutputStream(file);
+		DataOutputStream dos=new DataOutputStream(fos);
+		String newLine = System.getProperty("line.separator");
+		browserChosen = websiteBrowsers.getSelectionModel().getSelectedItem();
+		String browserEXE = new String();
 		if (isWindows()) {
-			file.setReadable(false,false);
-			FileOutputStream fos=new FileOutputStream(file);
-			DataOutputStream dos=new DataOutputStream(fos);
-			String newLine = System.getProperty("line.separator");
-			browserChosen = websiteBrowsers.getSelectionModel().getSelectedItem();
-			String browserEXE = new String();
 			if (browserChosen == "Google Chrome") {
 				browserEXE = "chrome.exe";
 			}
@@ -688,6 +710,9 @@ public class ApplicationWindow extends Application {
 				dos.writeBytes(newLine);
 			}
 			for (Website website: scriptSites) {
+				if (website.getURL().startsWith("www.") || website.getURL().startsWith("https://") == false && website.getURL().startsWith("http://") == false) {
+					website = new Website("https://" + website.getURL(), website.getLabel());
+				}
 				if (scriptSites.get(0) == website) {
 					dos.writeBytes("call start /w " + browserEXE + " -new-window " + website.getURL());
 					dos.writeBytes(newLine);
@@ -708,12 +733,22 @@ public class ApplicationWindow extends Application {
 			}
 			dos.close();
 			fos.close();
-		} else if (isMac()) {
-			FileOutputStream fos=new FileOutputStream(file); 
-			DataOutputStream dos=new DataOutputStream(fos); 
-			String newLine = System.getProperty("line.separator");
+		} 
+		else if (isMac()) {
 			dos.writeBytes("#!/bin/bash");
 			dos.writeBytes(newLine);
+
+			if (browserChosen == "Google Chrome") {
+				browserEXE = "Google Chrome";
+			}
+			else if (browserChosen == "FireFox") {
+				browserEXE = "FireFox";
+			}
+			if (scriptSites.isEmpty() == false) {
+				dos.writeBytes(bashWebsiteSection);
+				dos.writeBytes(newLine);
+			}
+
 			for (Website website: scriptSites) {
 				if (website.getURL().startsWith("www.") || website.getURL().startsWith("https://") == false && website.getURL().startsWith("http://") == false) {
 					website = new Website("https://" + website.getURL(), website.getLabel());
@@ -721,29 +756,34 @@ public class ApplicationWindow extends Application {
 				if (scriptSites.get(0) == website) {
 					dos.writeBytes("open -na 'Google Chrome' --args --new-window " + website.getURL()); 
 					dos.writeBytes(newLine);
-					file.setReadOnly();
 					dos.writeBytes("wait");
 					dos.writeBytes(newLine);
 				}
 				else if (scriptSites.get(scriptSites.size() - 1) == website) {
 					dos.writeBytes("open -na 'Google Chrome' " + website.getURL()); 
 					dos.writeBytes(newLine);
+					dos.writeBytes("wait");
+					dos.writeBytes(newLine);
 				}
 				else {
 					dos.writeBytes("open -na 'Google Chrome' " + website.getURL()); 
 					dos.writeBytes(newLine);
+					dos.writeBytes("wait");
+					dos.writeBytes(newLine);
 				}
 			}
+			if (scriptFiles.isEmpty() == false) {
+				dos.writeBytes(bashFileSection);
+				dos.writeBytes(newLine);
+			}
+
 			for (App currApp: scriptFiles) {
 				dos.writeBytes("open '" + currApp.getPath() + "'"); 
 				dos.writeBytes(newLine);
 			}
-			file.setReadOnly();
 			dos.close();
 			fos.close();
 			file.setExecutable(true);
-		} else {
-			System.out.println("Your OS is not supported!!");
 		}
 	}
 
@@ -752,36 +792,84 @@ public class ApplicationWindow extends Application {
 			Scanner sc = new Scanner(file);
 			if (sc.hasNextLine()) {
 				String currLine = sc.nextLine();
-				if (currLine.equals(batchWebsiteSection)) {
-					if (sc.hasNextLine()) {
-						currLine = sc.nextLine();
-					}
-					while (currLine.startsWith("call")) {
-						String[] lineSections = currLine.split(" ");
-						if (lineSections[3].equals("chrome.exe")) {
-							browserChosen = "Google Chrome";
-						}
-						else if (lineSections[3].equals("firefox.exe")) {
-							browserChosen = "FireFox";
-						}
-						/*else if (lineSections[3].equals("Internet Explorer")) {
-					browserChosen = "Internet Explorer";
-					}*/
-						String url = lineSections[lineSections.length - 1];
-						String label = url.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
-						addWebsite(new Website(url, label));
+				if (isWindows()) {
+					if (currLine.equals(batchWebsiteSection)) {
 						if (sc.hasNextLine()) {
 							currLine = sc.nextLine();
 						}
+						while (currLine.startsWith("call")) {
+							String[] lineSections = currLine.split(" ");
+							if (lineSections[3].equals("chrome.exe")) {
+								browserChosen = "Google Chrome";
+							}
+							else if (lineSections[3].equals("firefox.exe")) {
+								browserChosen = "FireFox";
+							}
+							/*else if (lineSections[3].equals("Internet Explorer")) {
+					browserChosen = "Internet Explorer";
+					}*/
+							String url = lineSections[lineSections.length - 1];
+							String label = url.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+							addWebsite(new Website(url, label));
+							if (sc.hasNextLine()) {
+								currLine = sc.nextLine();
+							}
+						}
+					}
+					if (currLine.equals(batchFileSection)) {
+						while (sc.hasNextLine()) {
+							currLine = sc.nextLine();
+							String[] lineSections = currLine.split("\"");
+							String path = lineSections[1];
+							fileChosen = new File(path);
+							addFile();
+						}
 					}
 				}
-				if (currLine.equals(batchFileSection)) {
-					while (sc.hasNextLine()) {
+				if (isMac()) {
+					if (currLine.equals("#!/bin/bash")) {
 						currLine = sc.nextLine();
-						String[] lineSections = currLine.split("\"");
-						String path = lineSections[1];
-						fileChosen = new File(path);
-						addFile();
+					}
+					if (currLine.equals(bashWebsiteSection)) {
+						if (sc.hasNextLine()) {
+							currLine = sc.nextLine();
+						}
+						while (sc.hasNextLine() && currLine.startsWith("bashFileSection") == false) {
+							if (currLine.startsWith("wait") && sc.hasNextLine()) {
+								currLine = sc.nextLine();
+							}
+							String[] lineSections = currLine.split("open -na ");
+							System.out.println(lineSections[1]);
+							if (lineSections[1].startsWith("'Google Chrome'")) {
+								browserChosen = "Google Chrome";
+							}
+							else if (lineSections[1].startsWith("'FireFox'")) {
+								browserChosen = "FireFox";
+							}
+							/*else if (lineSections[3].equals("Internet Explorer")) {
+							browserChosen = "Internet Explorer";
+							}*/
+							lineSections = lineSections[1].split(" ");
+							String url = lineSections[lineSections.length - 1];
+							String label = url.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+							addWebsite(new Website(url, label));
+							if (sc.hasNextLine()) {
+								currLine = sc.nextLine();
+								if (currLine.equals("wait") && sc.hasNextLine()) {
+									currLine = sc.nextLine();
+								}
+							}
+						}
+					}
+					if (currLine.equals(bashFileSection)) {
+						while (sc.hasNextLine()) {
+							currLine = sc.nextLine();
+							String[] lineSections = currLine.split("open ");
+							lineSections = lineSections[1].split("'");
+							String path = lineSections[1];
+							fileChosen = new File(path);
+							addFile();
+						}
 					}
 				}
 			}
