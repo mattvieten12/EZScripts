@@ -133,6 +133,9 @@ public class ApplicationWindow extends Application {
 
 		websiteBrowsers = new ComboBox<String>();
 		ArrayList<String> browserOptions = new ArrayList<String>();
+		if (isMac()) {
+			browserOptions.add("Safari");
+		}
 		browserOptions.add("Google Chrome");
 		//browserOptions.add("Internet Explorer");
 		browserOptions.add("FireFox");
@@ -159,8 +162,7 @@ public class ApplicationWindow extends Application {
 		fileListPane.getChildren().add(fileLabelsListView);
 		fileListPane.setPadding(new Insets(20, 20, 20, 0));
 
-		//The stage is the top-level container
-		stage.setTitle("Easy-Script-Generator");
+		stage.setTitle("EZScripts");
 		BorderPane appLayout = new BorderPane();
 		BorderPane componentLayout = new BorderPane();
 		componentLayout.setPadding(new Insets(20,0,20,20));
@@ -733,7 +735,10 @@ public class ApplicationWindow extends Application {
 			dos.writeBytes("#!/bin/bash");
 			dos.writeBytes(newLine);
 
-			if (browserChosen == "Google Chrome") {
+			if (browserChosen == "Safari") {
+				browserEXE = "Safari";
+			}
+			else if (browserChosen == "Google Chrome") {
 				browserEXE = "Google Chrome";
 			}
 			else if (browserChosen == "FireFox") {
@@ -835,7 +840,10 @@ public class ApplicationWindow extends Application {
 							}
 							String[] lineSections = currLine.split("open -na ");
 							System.out.println(lineSections[1]);
-							if (lineSections[1].startsWith("'Google Chrome'")) {
+							if (lineSections[1].startsWith("'Safari'")) {
+								browserChosen = "Safari";
+							}
+							else if (lineSections[1].startsWith("'Google Chrome'")) {
 								browserChosen = "Google Chrome";
 							}
 							else if (lineSections[1].startsWith("'FireFox'")) {
