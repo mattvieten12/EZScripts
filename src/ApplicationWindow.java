@@ -1077,22 +1077,21 @@ public class ApplicationWindow extends Application {
 			if (scriptSites.isEmpty() == false) {
 				dos.writeBytes(batchWebsiteSection);
 				dos.writeBytes(newLine);
-			}
-			dos.writeBytes("call start " + browserEXE + " " + newWindow + " ");
-			for (Website website: scriptSites) {
-				if (website.getURL().startsWith("https://") == false && website.getURL().startsWith("http://") == false) {
-					website = new Website("https://" + website.getURL(), website.getLabel());
-				}
+				dos.writeBytes("call start " + browserEXE + " " + newWindow + " ");
+				for (Website website: scriptSites) {
+					if (website.getURL().startsWith("https://") == false && website.getURL().startsWith("http://") == false) {
+						website = new Website("https://" + website.getURL(), website.getLabel());
+					}
 					dos.writeBytes(website.getURL() + " ");
+				}
+				dos.writeBytes(newLine);
 			}
-			dos.writeBytes(newLine);
-
 			if (scriptFiles.isEmpty() == false) {
 				dos.writeBytes(batchFileSection);
 				dos.writeBytes(newLine);
 			}
 			for (App currApp: scriptFiles) {
-				dos.writeBytes("\"" + currApp.getPath() + "\"");
+				dos.writeBytes("start \"\" \"" + currApp.getPath() + "\"");
 				dos.writeBytes(newLine);
 			}
 			dos.close();
@@ -1192,7 +1191,8 @@ public class ApplicationWindow extends Application {
 					if (currLine.equals(batchFileSection)) {
 						while (sc.hasNextLine()) {
 							currLine = sc.nextLine();
-							String[] lineSections = currLine.split("\"");
+							String[] lineSections = currLine.split(" ");
+							lineSections = lineSections[2].split("\"");
 							String path = lineSections[1];
 							fileChosen = new File(path);
 							addFile();
