@@ -323,6 +323,8 @@ public class ApplicationWindow extends Application {
 		 */
 		updateFileLVButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
+				removeFileButton.setDisable(true);
+				clearFileButton.setDisable(true);
 				updateFile();
 			}
 		});
@@ -334,6 +336,8 @@ public class ApplicationWindow extends Application {
 			@Override
 			public void handle(ActionEvent event) {
 				updateFilePath();
+				removeFileButton.setDisable(false);
+				clearFileButton.setDisable(false);
 			}
 		});
 
@@ -404,6 +408,8 @@ public class ApplicationWindow extends Application {
 		 */
 		updateWebsiteLVButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
+				clearWebsiteButton.setDisable(true);
+				removeWebsiteButton.setDisable(true);
 				updateWebsite();
 			}
 		});
@@ -736,7 +742,7 @@ public class ApplicationWindow extends Application {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
-                
+                this.setText(null);
             } else {
                 this.setText(item);
             }
@@ -830,7 +836,7 @@ public class ApplicationWindow extends Application {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
-                
+                this.setText(null);
             } else {
                 this.setText(item);
             }
@@ -855,6 +861,7 @@ public class ApplicationWindow extends Application {
 				if (file != null) {
 					fileToUpdate = file;
 					try {
+						System.out.println(1);
 						clearWebsites();
 						clearFiles();
 						readScript(file);
@@ -924,6 +931,8 @@ public class ApplicationWindow extends Application {
 					updateWebsiteURLButton.setManaged(false);
 					addWebsiteButton.setManaged(true);
 					addWebsiteButton.setVisible(true);
+					removeWebsiteButton.setDisable(false);
+					clearWebsiteButton.setDisable(false);
 				}
 			});
 		}
@@ -1150,6 +1159,7 @@ public class ApplicationWindow extends Application {
 	public static void readScript(File file) throws FileNotFoundException {
 		if (file != null) {
 			Scanner sc = new Scanner(file);
+			System.out.println(2);
 			if (sc.hasNextLine()) {
 				String currLine = sc.nextLine();
 				if (isWindows()) {
@@ -1173,6 +1183,9 @@ public class ApplicationWindow extends Application {
 							addWebsite(new Website(url, label));
 							if (sc.hasNextLine()) {
 								currLine = sc.nextLine();
+							}
+							else {
+								break;
 							}
 						}
 					}
