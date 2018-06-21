@@ -1061,12 +1061,15 @@ public class ApplicationWindow extends Application {
 		String newLine = System.getProperty("line.separator");
 		browserChosen = websiteBrowsers.getSelectionModel().getSelectedItem();
 		String browserEXE = new String();
+		String newWindow = new String();
 		if (isWindows()) {
 			if (browserChosen == "Google Chrome") {
 				browserEXE = "chrome.exe";
+				newWindow = "-new-window";
 			}
 			else if (browserChosen == "FireFox") {
 				browserEXE = "firefox.exe";
+				newWindow = "-new-instance";
 			}
 			/*else if (browserChosen == "Internet Explorer") {
 
@@ -1075,19 +1078,14 @@ public class ApplicationWindow extends Application {
 				dos.writeBytes(batchWebsiteSection);
 				dos.writeBytes(newLine);
 			}
+			dos.writeBytes("call start " + browserEXE + " " + newWindow + " ");
 			for (Website website: scriptSites) {
-				if (website.getURL().startsWith("www.") || website.getURL().startsWith("https://") == false && website.getURL().startsWith("http://") == false) {
+				if (website.getURL().startsWith("https://") == false && website.getURL().startsWith("http://") == false) {
 					website = new Website("https://" + website.getURL(), website.getLabel());
 				}
-				if (scriptSites.get(0) == website) {
-					dos.writeBytes("call start /w " + browserEXE + " -new-window " + website.getURL());
-					dos.writeBytes(newLine);
-				}
-				else {
-					dos.writeBytes("call start /w " + browserEXE + " " + website.getURL()); 
-					dos.writeBytes(newLine);
-				}
+					dos.writeBytes(website.getURL() + " ");
 			}
+			dos.writeBytes(newLine);
 
 			if (scriptFiles.isEmpty() == false) {
 				dos.writeBytes(batchFileSection);
@@ -1178,9 +1176,11 @@ public class ApplicationWindow extends Application {
 							/*else if (lineSections[3].equals("Internet Explorer")) {
 							browserChosen = "Internet Explorer";
 							}*/
-							String url = lineSections[lineSections.length - 1];
-							String label = url.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
-							addWebsite(new Website(url, label));
+							for (int i = 4; i < lineSections.length; i++) {
+								String url = lineSections[i];
+								String label = url.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+								addWebsite(new Website(url, label));
+							}
 							if (sc.hasNextLine()) {
 								currLine = sc.nextLine();
 							}
