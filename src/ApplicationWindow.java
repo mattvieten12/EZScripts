@@ -120,7 +120,7 @@ public class ApplicationWindow extends Application {
 	}
 	//starting point for the application
 	//this is where we put the code for the user interface
-	
+
 	/**
 	 * This method creates the GUI application and initializes all of its' properties.
 	 * @param stage - Main stage for application
@@ -150,7 +150,7 @@ public class ApplicationWindow extends Application {
 		 * Initializes the url textfield.
 		 */
 		websiteURL = new TextField();
-		
+
 		/**
 		 * When a user clicks Enter after typing a website in the text box, it fires the add website button.
 		 */
@@ -166,7 +166,7 @@ public class ApplicationWindow extends Application {
 		 */
 		filePath = new TextField();
 		filePath.setEditable(false);
-		
+
 		/**
 		 * When a user clicks Enter after picking a file in the file browse, it fires the add file button.
 		 */
@@ -212,13 +212,13 @@ public class ApplicationWindow extends Application {
 		fileLabelsListView.setPrefSize(250, 150);
 		fileLabelsListView.setEditable(false);
 		fileLabelsListView.setStyle("-fx-font-weight: bold");
-		
+
 		/**
 		 * Sets cell factory of both website list view and file list view to custom styles.
 		 */
 		websiteLabelsListView.setCellFactory(param -> new WebsiteCell());
 		fileLabelsListView.setCellFactory(param -> new FileCell());
-		
+
 		/**
 		 * Adds website list view to the website list pane.
 		 */
@@ -654,196 +654,196 @@ public class ApplicationWindow extends Application {
 
 		websiteURL.requestFocus();
 	}
-	
+
 	private class WebsiteCell extends ListCell<String> {
 
-        public WebsiteCell() {
-            ListCell<String> thisCell = this;
+		public WebsiteCell() {
+			ListCell<String> thisCell = this;
 
-            setContentDisplay(ContentDisplay.TEXT_ONLY);
-            
-            setOnDragDetected(event -> {
-                if (getItem() == null) {
-                    return;
-                }
+			setContentDisplay(ContentDisplay.TEXT_ONLY);
 
-                Dragboard dragboard = startDragAndDrop(TransferMode.MOVE);
-                ClipboardContent content = new ClipboardContent();
-                content.putString(getItem());
-                //dragboard.setDragView(null);
-                dragboard.setContent(content);
+			setOnDragDetected(event -> {
+				if (getItem() == null) {
+					return;
+				}
 
-                event.consume();
-            });
+				Dragboard dragboard = startDragAndDrop(TransferMode.MOVE);
+				ClipboardContent content = new ClipboardContent();
+				content.putString(getItem());
+				//dragboard.setDragView(null);
+				dragboard.setContent(content);
 
-            setOnDragOver(event -> {
-                if (event.getGestureSource() != thisCell &&
-                       event.getDragboard().hasString()) {
-                    event.acceptTransferModes(TransferMode.MOVE);
-                }
+				event.consume();
+			});
 
-                event.consume();
-            });
+			setOnDragOver(event -> {
+				if (event.getGestureSource() != thisCell &&
+						event.getDragboard().hasString()) {
+					event.acceptTransferModes(TransferMode.MOVE);
+				}
 
-            setOnDragEntered(event -> {
-                if (event.getGestureSource() != thisCell &&
-                        event.getDragboard().hasString()) {
-                    setOpacity(0.3);
-                }
-            });
+				event.consume();
+			});
 
-            setOnDragExited(event -> {
-                if (event.getGestureSource() != thisCell &&
-                        event.getDragboard().hasString()) {
-                    setOpacity(1);
-                }
-            });
+			setOnDragEntered(event -> {
+				if (event.getGestureSource() != thisCell &&
+						event.getDragboard().hasString()) {
+					setOpacity(0.3);
+				}
+			});
 
-            setOnDragDropped(event -> {
-                if (getItem() == null) {
-                    return;
-                }
+			setOnDragExited(event -> {
+				if (event.getGestureSource() != thisCell &&
+						event.getDragboard().hasString()) {
+					setOpacity(1);
+				}
+			});
 
-                Dragboard db = event.getDragboard();
-                boolean success = false;
+			setOnDragDropped(event -> {
+				if (getItem() == null) {
+					return;
+				}
 
-                if (db.hasString()) {
-                    ObservableList<String> items = getListView().getItems();
-                    int draggedIdx = items.indexOf(db.getString());
-                    int thisIdx = items.indexOf(getItem());
- 
-                    items.set(draggedIdx, getItem());
-                    items.set(thisIdx, db.getString());
-                    
-                    Website tempDragged = scriptSites.get(draggedIdx);
-                    Website tempDropped = scriptSites.get(thisIdx);
-                    
-                    scriptSites.set(draggedIdx, tempDropped);
-                    scriptSites.set(thisIdx, tempDragged);
-                    
-                    this.setText(items.get(draggedIdx));
+				Dragboard db = event.getDragboard();
+				boolean success = false;
 
-                    List<String> itemscopy = new ArrayList<>(getListView().getItems());
-                    getListView().getItems().setAll(itemscopy);
+				if (db.hasString()) {
+					ObservableList<String> items = getListView().getItems();
+					int draggedIdx = items.indexOf(db.getString());
+					int thisIdx = items.indexOf(getItem());
 
-                    success = true;
-                }
-                event.setDropCompleted(success);
+					items.set(draggedIdx, getItem());
+					items.set(thisIdx, db.getString());
 
-                event.consume();
-            });
+					Website tempDragged = scriptSites.get(draggedIdx);
+					Website tempDropped = scriptSites.get(thisIdx);
 
-            setOnDragDone(DragEvent::consume);
-        }
-        
-        
-        @Override
-        protected void updateItem(String item, boolean empty) {
-            super.updateItem(item, empty);
+					scriptSites.set(draggedIdx, tempDropped);
+					scriptSites.set(thisIdx, tempDragged);
 
-            if (empty || item == null) {
-                this.setText(null);
-            } else {
-                this.setText(item);
-            }
-        }
-    }
-	
-	
+					this.setText(items.get(draggedIdx));
+
+					List<String> itemscopy = new ArrayList<>(getListView().getItems());
+					getListView().getItems().setAll(itemscopy);
+
+					success = true;
+				}
+				event.setDropCompleted(success);
+
+				event.consume();
+			});
+
+			setOnDragDone(DragEvent::consume);
+		}
+
+
+		@Override
+		protected void updateItem(String item, boolean empty) {
+			super.updateItem(item, empty);
+
+			if (empty || item == null) {
+				this.setText(null);
+			} else {
+				this.setText(item);
+			}
+		}
+	}
+
+
 	private class FileCell extends ListCell<String> {
 
-        public FileCell() {
-            ListCell<String> thisCell = this;
+		public FileCell() {
+			ListCell<String> thisCell = this;
 
-            setContentDisplay(ContentDisplay.TEXT_ONLY);
-            
-            setOnDragDetected(event -> {
-                if (getItem() == null) {
-                    return;
-                }
+			setContentDisplay(ContentDisplay.TEXT_ONLY);
 
-                Dragboard dragboard = startDragAndDrop(TransferMode.MOVE);
-                ClipboardContent content = new ClipboardContent();
-                content.putString(getItem());
-                dragboard.setContent(content);
+			setOnDragDetected(event -> {
+				if (getItem() == null) {
+					return;
+				}
 
-                event.consume();
-            });
+				Dragboard dragboard = startDragAndDrop(TransferMode.MOVE);
+				ClipboardContent content = new ClipboardContent();
+				content.putString(getItem());
+				dragboard.setContent(content);
 
-            setOnDragOver(event -> {
-                if (event.getGestureSource() != thisCell &&
-                       event.getDragboard().hasString()) {
-                    event.acceptTransferModes(TransferMode.MOVE);
-                }
+				event.consume();
+			});
 
-                event.consume();
-            });
+			setOnDragOver(event -> {
+				if (event.getGestureSource() != thisCell &&
+						event.getDragboard().hasString()) {
+					event.acceptTransferModes(TransferMode.MOVE);
+				}
 
-            setOnDragEntered(event -> {
-                if (event.getGestureSource() != thisCell &&
-                        event.getDragboard().hasString()) {
-                    setOpacity(0.3);
-                }
-            });
+				event.consume();
+			});
 
-            setOnDragExited(event -> {
-                if (event.getGestureSource() != thisCell &&
-                        event.getDragboard().hasString()) {
-                    setOpacity(1);
-                }
-            });
+			setOnDragEntered(event -> {
+				if (event.getGestureSource() != thisCell &&
+						event.getDragboard().hasString()) {
+					setOpacity(0.3);
+				}
+			});
 
-            setOnDragDropped(event -> {
-                if (getItem() == null) {
-                    return;
-                }
+			setOnDragExited(event -> {
+				if (event.getGestureSource() != thisCell &&
+						event.getDragboard().hasString()) {
+					setOpacity(1);
+				}
+			});
 
-                Dragboard db = event.getDragboard();
-                boolean success = false;
+			setOnDragDropped(event -> {
+				if (getItem() == null) {
+					return;
+				}
 
-                if (db.hasString()) {
-                    ObservableList<String> items = getListView().getItems();
-                    int draggedIdx = items.indexOf(db.getString());
-                    int thisIdx = items.indexOf(getItem());
- 
-                    items.set(draggedIdx, getItem());
-                    items.set(thisIdx, db.getString());
-                    
-                    App tempDragged = scriptFiles.get(draggedIdx);
-                    App tempDropped = scriptFiles.get(thisIdx);
-                    
-                    scriptFiles.set(draggedIdx, tempDropped);
-                    scriptFiles.set(thisIdx, tempDragged);
-                    
-                    this.setText(items.get(draggedIdx));
+				Dragboard db = event.getDragboard();
+				boolean success = false;
 
-                    List<String> itemscopy = new ArrayList<>(getListView().getItems());
-                    getListView().getItems().setAll(itemscopy);
+				if (db.hasString()) {
+					ObservableList<String> items = getListView().getItems();
+					int draggedIdx = items.indexOf(db.getString());
+					int thisIdx = items.indexOf(getItem());
 
-                    success = true;
-                }
-                event.setDropCompleted(success);
+					items.set(draggedIdx, getItem());
+					items.set(thisIdx, db.getString());
 
-                event.consume();
-            });
+					App tempDragged = scriptFiles.get(draggedIdx);
+					App tempDropped = scriptFiles.get(thisIdx);
 
-            setOnDragDone(DragEvent::consume);
-        }
-        
-        
-        @Override
-        protected void updateItem(String item, boolean empty) {
-            super.updateItem(item, empty);
+					scriptFiles.set(draggedIdx, tempDropped);
+					scriptFiles.set(thisIdx, tempDragged);
 
-            if (empty || item == null) {
-                this.setText(null);
-            } else {
-                this.setText(item);
-            }
-        }
-    }
-	
-	
+					this.setText(items.get(draggedIdx));
+
+					List<String> itemscopy = new ArrayList<>(getListView().getItems());
+					getListView().getItems().setAll(itemscopy);
+
+					success = true;
+				}
+				event.setDropCompleted(success);
+
+				event.consume();
+			});
+
+			setOnDragDone(DragEvent::consume);
+		}
+
+
+		@Override
+		protected void updateItem(String item, boolean empty) {
+			super.updateItem(item, empty);
+
+			if (empty || item == null) {
+				this.setText(null);
+			} else {
+				this.setText(item);
+			}
+		}
+	}
+
+
 	public static void setUpdateTabEvent() {
 		updateTab.setOnSelectionChanged(new EventHandler<Event>() {
 			@Override
@@ -1176,8 +1176,8 @@ public class ApplicationWindow extends Application {
 								browserChosen = "FireFox";
 							}
 							/*else if (lineSections[3].equals("Internet Explorer")) {
-					browserChosen = "Internet Explorer";
-					}*/
+							browserChosen = "Internet Explorer";
+							}*/
 							String url = lineSections[lineSections.length - 1];
 							String label = url.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
 							addWebsite(new Website(url, label));
@@ -1207,33 +1207,29 @@ public class ApplicationWindow extends Application {
 						if (sc.hasNextLine()) {
 							currLine = sc.nextLine();
 						}
-						while (sc.hasNextLine() && currLine.startsWith("bashFileSection") == false) {
-							if (currLine.startsWith("wait") && sc.hasNextLine()) {
-								currLine = sc.nextLine();
+						while (currLine.startsWith("open") || currLine.startsWith("wait")) {
+							if (currLine.startsWith("open")) {
+								String[] lineSections = currLine.split("open -na ");
+								System.out.println(lineSections[1]);
+								if (lineSections[1].startsWith("'Safari'")) {
+									browserChosen = "Safari";
+								}
+								else if (lineSections[1].startsWith("'Google Chrome'")) {
+									browserChosen = "Google Chrome";
+								}
+								else if (lineSections[1].startsWith("'FireFox'")) {
+									browserChosen = "FireFox";
+								}
+								lineSections = lineSections[1].split(" ");
+								String url = lineSections[lineSections.length - 1];
+								String label = url.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+								addWebsite(new Website(url, label));
 							}
-							String[] lineSections = currLine.split("open -na ");
-							System.out.println(lineSections[1]);
-							if (lineSections[1].startsWith("'Safari'")) {
-								browserChosen = "Safari";
-							}
-							else if (lineSections[1].startsWith("'Google Chrome'")) {
-								browserChosen = "Google Chrome";
-							}
-							else if (lineSections[1].startsWith("'FireFox'")) {
-								browserChosen = "FireFox";
-							}
-							/*else if (lineSections[3].equals("Internet Explorer")) {
-							browserChosen = "Internet Explorer";
-							}*/
-							lineSections = lineSections[1].split(" ");
-							String url = lineSections[lineSections.length - 1];
-							String label = url.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
-							addWebsite(new Website(url, label));
 							if (sc.hasNextLine()) {
 								currLine = sc.nextLine();
-								if (currLine.equals("wait") && sc.hasNextLine()) {
-									currLine = sc.nextLine();
-								}
+							}
+							else {
+								break;
 							}
 						}
 					}
