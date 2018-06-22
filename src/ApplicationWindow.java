@@ -182,12 +182,14 @@ public class ApplicationWindow extends Application {
 		 */
 		websiteBrowsers = new ComboBox<String>();
 		ArrayList<String> browserOptions = new ArrayList<String>();
-		if (isMac()) {
+		/*if (isMac()) {
 			browserOptions.add("Safari");
-		}
+		}*/
 		browserOptions.add("Google Chrome");
 		//browserOptions.add("Internet Explorer");
-		browserOptions.add("FireFox");
+		if (isWindows()) {
+			browserOptions.add("FireFox");
+		}
 		websiteBrowsers.getItems().addAll(browserOptions);
 		websiteBrowsers.getSelectionModel().selectFirst();
 
@@ -861,7 +863,6 @@ public class ApplicationWindow extends Application {
 				if (file != null) {
 					fileToUpdate = file;
 					try {
-						System.out.println(1);
 						clearWebsites();
 						clearFiles();
 						readScript(file);
@@ -1120,19 +1121,19 @@ public class ApplicationWindow extends Application {
 					website = new Website("https://" + website.getURL(), website.getLabel());
 				}
 				if (scriptSites.get(0) == website) {
-					dos.writeBytes("open -na 'Google Chrome' --args --new-window " + website.getURL()); 
+					dos.writeBytes("open -na " + browserChosen + " --args --new-window " + website.getURL()); 
 					dos.writeBytes(newLine);
 					dos.writeBytes("wait");
 					dos.writeBytes(newLine);
 				}
 				else if (scriptSites.get(scriptSites.size() - 1) == website) {
-					dos.writeBytes("open -na 'Google Chrome' " + website.getURL()); 
+					dos.writeBytes("open -na " + browserChosen + " " + website.getURL()); 
 					dos.writeBytes(newLine);
 					dos.writeBytes("wait");
 					dos.writeBytes(newLine);
 				}
 				else {
-					dos.writeBytes("open -na 'Google Chrome' " + website.getURL()); 
+					dos.writeBytes("open -na " + browserChosen + " " + website.getURL()); 
 					dos.writeBytes(newLine);
 					dos.writeBytes("wait");
 					dos.writeBytes(newLine);
@@ -1156,7 +1157,6 @@ public class ApplicationWindow extends Application {
 	public static void readScript(File file) throws FileNotFoundException {
 		if (file != null) {
 			Scanner sc = new Scanner(file);
-			System.out.println(2);
 			if (sc.hasNextLine()) {
 				String currLine = sc.nextLine();
 				if (isWindows()) {
@@ -1210,15 +1210,11 @@ public class ApplicationWindow extends Application {
 						while (currLine.startsWith("open") || currLine.startsWith("wait")) {
 							if (currLine.startsWith("open")) {
 								String[] lineSections = currLine.split("open -na ");
-								System.out.println(lineSections[1]);
-								if (lineSections[1].startsWith("'Safari'")) {
+								/*if (lineSections[1].startsWith("'Safari'")) {
 									browserChosen = "Safari";
-								}
-								else if (lineSections[1].startsWith("'Google Chrome'")) {
+								}*/
+								if (lineSections[1].startsWith("'Google Chrome'")) {
 									browserChosen = "Google Chrome";
-								}
-								else if (lineSections[1].startsWith("'FireFox'")) {
-									browserChosen = "FireFox";
 								}
 								lineSections = lineSections[1].split(" ");
 								String url = lineSections[lineSections.length - 1];
