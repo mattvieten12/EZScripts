@@ -23,7 +23,7 @@ import javafx.stage.Stage;
 public class ApplicationWindow extends Application {
 
 	private ArrayList<ApplicationPage> appPages;
-	private static TabPane tabPane;
+	protected static TabPane tabPane;
 
 	private Scene appScene;
 
@@ -53,12 +53,6 @@ public class ApplicationWindow extends Application {
 		 * Creates tab pane and tabs at the top of application for creating new scripts and updating old scripts.
 		 */
 		tabPane = new TabPane();
-		/*for (ApplicationPage appPage: appPages) {
-			Tab appPageTab = new Tab();
-			appPageTab.setText("Untitled");
-			tabPane.getTabs().add(appPageTab);
-			appPage.primaryStage = stage;
-		}*/
 
 		tabPane = new TabPane();
 		final Tab newTab = new Tab("+");
@@ -93,7 +87,6 @@ public class ApplicationWindow extends Application {
 		stage.setScene(appScene);
 		stage.show();
 		stage.setResizable(false);
-
 	}
 
 	private Tab createAndSelectNewTab(final TabPane tabPane, final String title) {

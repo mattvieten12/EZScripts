@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javafx.animation.FadeTransition;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -38,11 +40,12 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class ApplicationPage {
 
 	private Script script;
-	
+
 	private TextField websiteURL;
 	private TextField filePath;
 
@@ -55,7 +58,7 @@ public class ApplicationPage {
 	/*private static TabPane tabPane;
 	private static Tab createTab;
 	private static Tab updateTab;*/
-	
+
 	private FlowPane websiteListPane;
 	private FlowPane fileListPane;
 	private FlowPane websiteURLPane;
@@ -64,12 +67,10 @@ public class ApplicationPage {
 	private ListView<String> websiteLabelsListView;
 	private ListView<String> fileLabelsListView;
 
-	private TextField scriptName;
-
 	protected Scene appScene;
 	protected Stage primaryStage;
 	protected BorderPane appLayout;
-	
+
 	final Button editOldScriptButton = new Button("Edit old script...");
 
 	private final Button removeWebsiteButton = new Button("Remove Website");
@@ -77,7 +78,7 @@ public class ApplicationPage {
 	private final Button addWebsiteButton = new Button("Add website!");
 	private final Button updateWebsiteURLButton = new Button("Update Website!");
 	private final Button clearWebsiteButton = new Button("Clear All Websites");
-	private final Button saveScriptButton = new Button("Create Shortcut!");
+	private final Button saveScriptButton = new Button("Save Shortcut As...");
 
 	private final Button browseFilesButton = new Button("Browse files...");
 	private final Button addFileButton = new Button("Add File!");
@@ -85,13 +86,20 @@ public class ApplicationPage {
 	private final Button updateFileLVButton = new Button("Update File");
 	private final Button clearFileButton = new Button("Clear All Files");
 	private final Button updateFilePathButton = new Button("Update!");
-	private final Button popupCreateButton = new Button("CREATE!");
 
 	private final Button updateScriptButton = new Button(("Update Script!"));
 
-	private final static Label websiteLabelWarning = new Label("Invalid URL, please check that the url is correct.");
-	private final static Label nonExecutableWarning = new Label("Please select a file or application!");
-	private final static Label fileAlreadyExistsWarning = new Label("File already exists, please select a different name.");
+	private final Label websiteLabelWarning = new Label("Invalid URL, please check that the url is correct.");
+	private final Label nonExecutableWarning = new Label("Please select a file or application!");
+	private final Label fileAlreadyExistsWarning = new Label("File already exists, please select a different name.");
+	private final Label selectFileNameWarning = new Label("Please enter a file name to save the shortcut.");
+	private final Label noFileSelectedWarning = new Label("Please select an EZScripts file to import.");
+	private final Label noSitesOrFilesWarning = new Label("There is nothing to save, please add at least one website or file.");
+
+	private final Label saveScriptSuccessMessage = new Label("Successfully saved shortcut!");
+	private final Label updateScriptSuccessMessage = new Label("Successfully updated shortcut!");
+
+	private FadeTransition fadeOut;
 
 	private final static String regex = "^(http:\\/\\/www\\.|https:\\/\\/www\\.|http:\\/\\/|https:\\/\\/)?[a-z0-9]+([\\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(:[0-9]{1,5})?(\\/.*)?$";
 	private final static String OS = System.getProperty("os.name").toLowerCase();
@@ -99,11 +107,11 @@ public class ApplicationPage {
 	private final static String batchFileSection = new String("::File Section");
 	private final static String bashWebsiteSection = new String("#Website Section");
 	private final static String bashFileSection = new String("#File Section");
-	
+
 	public ApplicationPage(Script script) {
 		this.script = script;
-		
-		
+
+
 		/**
 		 * Initializes website list and file list panes.
 		 */
@@ -210,7 +218,7 @@ public class ApplicationPage {
 		BorderPane componentLayout = new BorderPane();
 		componentLayout.setPadding(new Insets(20,0,20,20));
 
-		
+
 		/**
 		 * Initializes the website url pane.
 		 */
@@ -379,10 +387,24 @@ public class ApplicationPage {
 		updateScriptButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
 				updateScript();
+				updateScriptSuccessMessage.setVisible(true);
+				updateScriptSuccessMessage.setManaged(true);
+				fadeOut.setNode(updateScriptSuccessMessage);
+				fadeOut.setFromValue(0.0);
+				fadeOut.setToValue(1.0);
+				fadeOut.setCycleCount(2);
+				fadeOut.setAutoReverse(true);
+				fadeOut.playFromStart();
+				fadeOut.setOnFinished(new EventHandler<ActionEvent>() {
+					@Override
+					public void handle(ActionEvent actionEvent) {
+						updateScriptSuccessMessage.setManaged(false);
+					}
+				});
 			}
 		});
-		
-		
+
+
 		editOldScriptButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
 				FileChooser chooser = new FileChooser();
@@ -394,20 +416,25 @@ public class ApplicationPage {
 					ExtensionFilter filter = new ExtensionFilter("Script Files", "*.command");
 					chooser.getExtensionFilters().add(filter);
 				}
+				chooser.setInitialDirectory(new File(System.getProperty("user.home") + "/Desktop/"));
 				File file = chooser.showOpenDialog(primaryStage);
 				if (file != null) {
+					noFileSelectedWarning.setVisible(false);
+					noFileSelectedWarning.setManaged(false);
 					fileToUpdate = file;
 					try {
 						clearWebsites();
 						clearFiles();
 						readScript(file);
 						websiteBrowsers.getSelectionModel().select(browserChosen);
+						ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().setText(file.getName());
 					} catch (FileNotFoundException e) {
 
 					}
 				}
 				else {
-					
+					noFileSelectedWarning.setVisible(true);
+					noFileSelectedWarning.setManaged(true);
 				}
 			}
 		});
@@ -441,6 +468,35 @@ public class ApplicationPage {
 		fileAlreadyExistsWarning.setTextFill(Color.RED);
 		fileAlreadyExistsWarning.setVisible(false);
 		fileAlreadyExistsWarning.setManaged(false);
+
+		selectFileNameWarning.setTextFill(Color.RED);
+		selectFileNameWarning.setVisible(false);
+		selectFileNameWarning.setManaged(false);
+
+		noFileSelectedWarning.setTextFill(Color.RED);
+		noFileSelectedWarning.setVisible(false);
+		noFileSelectedWarning.setManaged(false);
+
+		noSitesOrFilesWarning.setTextFill(Color.RED);
+		noSitesOrFilesWarning.setVisible(false);
+		noSitesOrFilesWarning.setManaged(false);
+
+		saveScriptSuccessMessage.setTextFill(Color.GREEN);
+		saveScriptSuccessMessage.setVisible(false);
+		saveScriptSuccessMessage.setManaged(false);
+
+		updateScriptSuccessMessage.setTextFill(Color.GREEN);
+		updateScriptSuccessMessage.setVisible(false);
+		updateScriptSuccessMessage.setManaged(false);
+
+		fadeOut = new FadeTransition(
+				Duration.millis(2000)
+				);
+
+
+
+		updateScriptButton.setVisible(false);
+		updateScriptButton.setManaged(false);
 
 		/**
 		 * Sets various components invisible (until conditions are met).
@@ -499,15 +555,29 @@ public class ApplicationPage {
 		 * Adds create script button and update script button to the bottom pane.
 		 */
 		FlowPane bottomPane = new FlowPane();
-		bottomPane.getChildren().add(saveScriptButton);
-		bottomPane.getChildren().add(updateScriptButton);
-		bottomPane.getChildren().add(editOldScriptButton);
+		BorderPane scriptButtonPane = new BorderPane();
+		FlowPane saveAndUpdatePane = new FlowPane();
+		saveAndUpdatePane.getChildren().add(saveScriptButton);
+		saveAndUpdatePane.getChildren().add(updateScriptButton);
+		saveAndUpdatePane.prefWrapLengthProperty().set(325);
+		scriptButtonPane.setLeft(saveAndUpdatePane);
+		scriptButtonPane.setRight(editOldScriptButton);
+
+
+		bottomPane.getChildren().add(scriptButtonPane);
+
+		FlowPane warningPane = new FlowPane();
+		warningPane.getChildren().add(fileAlreadyExistsWarning);
+		warningPane.getChildren().add(selectFileNameWarning);
+		warningPane.getChildren().add(noFileSelectedWarning);
+		warningPane.getChildren().add(noSitesOrFilesWarning);
+		warningPane.getChildren().add(saveScriptSuccessMessage);
+		warningPane.getChildren().add(updateScriptSuccessMessage);
+		bottomPane.getChildren().add(warningPane);
 
 		/**
 		 * Makes update script button invisible (until conditions are met) and adds the bottom pane to the main application pane.
 		 */
-		updateScriptButton.setVisible(false);
-		updateScriptButton.setManaged(false);
 		componentLayout.setBottom(bottomPane);
 
 		/**
@@ -517,89 +587,51 @@ public class ApplicationPage {
 			@Override
 			public void handle(ActionEvent event) {
 				if (script.getWebsites().isEmpty() == false || script.getFiles().isEmpty() == false) {
-					final Stage dialog = new Stage();
-					dialog.setTitle("Script Name Confirmation");
-					dialog.initModality(Modality.APPLICATION_MODAL);
-					dialog.initOwner(primaryStage);
-					BorderPane popupPane = new BorderPane();
-					Scene dialogScene = new Scene(popupPane, 350, 200);
-					dialog.setScene(dialogScene);
-					dialog.show();
-
-					scriptName = new TextField();
-					scriptName.setPrefWidth(250);
-					scriptName.setFont(new Font("Arial", 30));
-					scriptName.setOnAction(new EventHandler<ActionEvent>() {
-						@Override
-						public void handle(ActionEvent event) {
-							popupCreateButton.fire();
-						}
-					});
-					Label scriptNameLabel = new Label("Pick a name for your generated script!");
-					scriptNameLabel.setFont(new Font("Arial", 20));
-					scriptNameLabel.setPadding(new Insets(0, 0, 10, 0));
-					FlowPane scriptPane = new FlowPane();
-					scriptPane.getChildren().addAll(scriptNameLabel);
-					scriptPane.getChildren().addAll(scriptName);
-					scriptPane.setAlignment(Pos.CENTER);
-					scriptPane.setPadding(new Insets(10, 0, 0, 0));
-					popupPane.setTop(scriptPane);
-
-					popupCreateButton.setFont(new Font("Arial", 50));
-
-					FlowPane bottomPane = new FlowPane();
-					FlowPane centerPane = new FlowPane();
-					centerPane.setAlignment(Pos.CENTER);
-
+					FileChooser fileChooser = new FileChooser();
+					fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "/Desktop/"));
 					if (isWindows()) {
-						dialogScene.getStylesheets().add(getClass().getResource("windowsStyles.css").toExternalForm());
+						fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Batch File(*.bat)", "*.bat"));
 					}
-
-					/**
-					 * When the popup create button is pressed, it fires the create script method with the given file name.
-					 */
-					popupCreateButton.setOnAction(new EventHandler<ActionEvent>() {
-						@Override
-						public void handle(ActionEvent event) {
-							if (scriptName != null) {
-
-								try {
-									File file = null;
-									if (isWindows()) {
-										file=new File(System.getProperty("user.home") + "\\Desktop\\" + scriptName.getText() + ".bat");
-									}
-									else if (isMac()) {
-										file = new File(System.getProperty("user.home") + "/Desktop/" + scriptName.getText() + ".command"); 
-									}
-									if (file.isFile()) {
-										fileAlreadyExistsWarning.setVisible(true);
-										fileAlreadyExistsWarning.setManaged(true);
-									}
-									else {
-										createScript(file);
-									}
-									clearWebsites();
-									clearFiles();
-									dialog.hide();
-
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
+					else if (isMac()) {
+						fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Command File(*.command)", "*.command"));
+					}
+					fileChooser.setTitle("Save Shortcut");
+					File file = fileChooser.showSaveDialog(primaryStage);
+					try {
+						if (file == null) {
+							selectFileNameWarning.setVisible(true);
+							selectFileNameWarning.setManaged(true);
 						}
-					});
-
-
-
-					/**
-					 * Adds popup components to different panes and then adds those panes to the popup window pane.
-					 */
-					centerPane.getChildren().add(popupCreateButton);
-					bottomPane.getChildren().add(fileAlreadyExistsWarning);
-					fileAlreadyExistsWarning.setVisible(false);
-					fileAlreadyExistsWarning.setManaged(false);
-					popupPane.setCenter(centerPane);
-					popupPane.setBottom(bottomPane);
+						else {
+							createScript(file);
+							ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().setText(file.getName());
+							selectFileNameWarning.setVisible(false);
+							selectFileNameWarning.setManaged(false);
+							fileAlreadyExistsWarning.setVisible(false);
+							fileAlreadyExistsWarning.setManaged(false);
+							saveScriptSuccessMessage.setManaged(true);
+							saveScriptSuccessMessage.setVisible(true);
+							fadeOut.setNode(saveScriptSuccessMessage);
+							fadeOut.setFromValue(0.0);
+							fadeOut.setToValue(1.0);
+							fadeOut.setCycleCount(2);
+							fadeOut.setAutoReverse(true);
+							fadeOut.playFromStart();
+							fadeOut.setOnFinished(new EventHandler<ActionEvent>() {
+								@Override
+								public void handle(ActionEvent actionEvent) {
+									saveScriptSuccessMessage.setManaged(false);
+								}
+							});
+						}
+					}
+					catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				else {
+					noSitesOrFilesWarning.setVisible(true);
+					noSitesOrFilesWarning.setManaged(true);
 				}
 			}
 		});
@@ -637,7 +669,7 @@ public class ApplicationPage {
 
 		websiteURL.requestFocus();
 	}
-	
+
 	private class WebsiteCell extends ListCell<String> {
 
 		public WebsiteCell() {
@@ -825,7 +857,7 @@ public class ApplicationPage {
 			}
 		}
 	}
-	
+
 	public void addWebsite(Website website) {
 		websiteLabelWarning.setManaged(false);
 		websiteLabelWarning.setVisible(false);
@@ -837,6 +869,8 @@ public class ApplicationPage {
 		websiteLabelsListView.getItems().addAll(website.getLabel());
 		websiteLabelsListView.getSelectionModel().selectLast();
 		websiteURL.requestFocus();
+		noSitesOrFilesWarning.setVisible(false);
+		noSitesOrFilesWarning.setManaged(false);
 	}
 
 	public void removeWebsite() {
@@ -906,7 +940,10 @@ public class ApplicationPage {
 		removeFileButton.setVisible(true);
 		updateFileLVButton.setVisible(true);
 		clearFileButton.setVisible(true);
+		filePath.requestFocus();
 		filePath.clear();
+		noSitesOrFilesWarning.setVisible(false);
+		noSitesOrFilesWarning.setManaged(false);
 	}
 
 	public void removeFile() {
@@ -1113,13 +1150,13 @@ public class ApplicationPage {
 						}
 						while (currLine.startsWith("call")) {
 							String[] lineSections = currLine.split(" ");
-							if (lineSections[3].equals("chrome.exe")) {
+							if (lineSections[2].equals("chrome.exe")) {
 								browserChosen = "Google Chrome";
 							}
-							else if (lineSections[3].equals("firefox.exe")) {
+							else if (lineSections[2].equals("firefox.exe")) {
 								browserChosen = "FireFox";
 							}
-							/*else if (lineSections[3].equals("iexplore.exe")) {
+							/*else if (lineSections[2].equals("iexplore.exe")) {
 								browserChosen = "Internet Explorer";
 							}*/
 							for (int i = 4; i < lineSections.length; i++) {
@@ -1205,15 +1242,13 @@ public class ApplicationPage {
 		} catch (IOException e) {
 
 		}
-		clearFiles();
-		clearWebsites();
 		updateScriptButton.setVisible(false);
 		updateScriptButton.setManaged(false);
 		saveScriptButton.setVisible(true);
 		saveScriptButton.setManaged(true);
 	}
-	
-	
+
+
 	public Script getScript() {
 		return script;
 	}
