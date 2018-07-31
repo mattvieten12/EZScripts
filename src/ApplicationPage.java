@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javafx.animation.FadeTransition;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -69,7 +68,7 @@ public class ApplicationPage {
 	protected Stage primaryStage;
 	protected BorderPane appLayout;
 
-	final Button editOldScriptButton = new Button("Edit old script...");
+	final Button editOldScriptButton = new Button("Import Shortcut...");
 
 	private final Button removeWebsiteButton = new Button("Remove Website");
 	private final Button updateWebsiteLVButton = new Button("Update Website");
@@ -89,7 +88,6 @@ public class ApplicationPage {
 
 	private final Label websiteLabelWarning = new Label("Invalid URL, please check that the url is correct.");
 	private final Label nonExecutableWarning = new Label("Please select a file or application!");
-	private final Label fileAlreadyExistsWarning = new Label("File already exists, please select a different name.");
 	private final Label selectFileNameWarning = new Label("Please enter a file name to save the shortcut.");
 	private final Label noFileSelectedWarning = new Label("Please select an EZScripts file to import.");
 	private final Label noSitesOrFilesWarning = new Label("There is nothing to save, please add at least one website or file.");
@@ -97,7 +95,13 @@ public class ApplicationPage {
 	private final Label saveScriptSuccessMessage = new Label("Successfully saved shortcut!");
 	private final Label updateScriptSuccessMessage = new Label("Successfully updated shortcut!");
 
-	private FadeTransition fadeOut;
+	private FadeTransition fadeOutWLW;
+	private FadeTransition fadeOutNEW;
+	private FadeTransition fadeOutSFNW;
+	private FadeTransition fadeOutNFSW;
+	private FadeTransition fadeOutNSOFW;
+	private FadeTransition fadeOutSSSM;
+	private FadeTransition fadeOutUSSM;
 
 	private final static String regex = "^(http:\\/\\/www\\.|https:\\/\\/www\\.|http:\\/\\/|https:\\/\\/)?[a-z0-9]+([\\-\\.]{1}[a-z0-9]+)*\\.[a-z]{2,5}(:[0-9]{1,5})?(\\/.*)?$";
 	private final static String OS = System.getProperty("os.name").toLowerCase();
@@ -108,7 +112,7 @@ public class ApplicationPage {
 
 	public ApplicationPage(Script script) {
 		this.script = script;
-
+		this.primaryStage = ApplicationWindow.primaryStage;
 
 		/**
 		 * Initializes website list and file list panes.
@@ -133,7 +137,12 @@ public class ApplicationPage {
 		websiteURL.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
+				if (addWebsiteButton.isVisible()) {
 				addWebsiteButton.fire();
+				}
+				else if (updateWebsiteURLButton.isVisible()) {
+					updateWebsiteURLButton.fire();
+				}
 			}
 		});
 
@@ -149,7 +158,12 @@ public class ApplicationPage {
 		filePath.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				addFileButton.fire();
+				if (addFileButton.isVisible()) {
+					addFileButton.fire();
+					}
+					else if (updateFilePathButton.isVisible()) {
+						updateFilePathButton.fire();
+					}
 			}
 		});
 
@@ -291,6 +305,7 @@ public class ApplicationPage {
 				removeFileButton.setDisable(true);
 				clearFileButton.setDisable(true);
 				updateFile();
+				filePath.requestFocus();
 			}
 		});
 
@@ -340,13 +355,35 @@ public class ApplicationPage {
 						addWebsite(website);
 					}
 					else {
-						websiteLabelWarning.setManaged(true);
 						websiteLabelWarning.setVisible(true);
+						fadeOutWLW.setNode(websiteLabelWarning);
+						fadeOutWLW.setFromValue(0.0);
+						fadeOutWLW.setToValue(1.0);
+						fadeOutWLW.setCycleCount(2);
+						fadeOutWLW.setAutoReverse(true);
+						fadeOutWLW.playFromStart();
+						fadeOutWLW.setOnFinished(new EventHandler<ActionEvent>() {
+							@Override
+							public void handle(ActionEvent actionEvent) {
+								websiteLabelWarning.setManaged(false);
+							}
+						});
 					}
 				}
 				else {
-					websiteLabelWarning.setManaged(true);
 					websiteLabelWarning.setVisible(true);
+					fadeOutWLW.setNode(websiteLabelWarning);
+					fadeOutWLW.setFromValue(0.0);
+					fadeOutWLW.setToValue(1.0);
+					fadeOutWLW.setCycleCount(2);
+					fadeOutWLW.setAutoReverse(true);
+					fadeOutWLW.playFromStart();
+					fadeOutWLW.setOnFinished(new EventHandler<ActionEvent>() {
+						@Override
+						public void handle(ActionEvent actionEvent) {
+							websiteLabelWarning.setManaged(false);
+						}
+					});
 				}
 			}
 		});
@@ -376,6 +413,7 @@ public class ApplicationPage {
 				clearWebsiteButton.setDisable(true);
 				removeWebsiteButton.setDisable(true);
 				updateWebsite();
+				websiteURL.requestFocus();
 			}
 		});
 
@@ -385,15 +423,19 @@ public class ApplicationPage {
 		updateScriptButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
 				updateScript();
+				noSitesOrFilesWarning.setManaged(false);
+				noFileSelectedWarning.setManaged(false);
+				selectFileNameWarning.setManaged(false);
+				saveScriptSuccessMessage.setManaged(false);
 				updateScriptSuccessMessage.setVisible(true);
 				updateScriptSuccessMessage.setManaged(true);
-				fadeOut.setNode(updateScriptSuccessMessage);
-				fadeOut.setFromValue(0.0);
-				fadeOut.setToValue(1.0);
-				fadeOut.setCycleCount(2);
-				fadeOut.setAutoReverse(true);
-				fadeOut.playFromStart();
-				fadeOut.setOnFinished(new EventHandler<ActionEvent>() {
+				fadeOutUSSM.setNode(updateScriptSuccessMessage);
+				fadeOutUSSM.setFromValue(0.0);
+				fadeOutUSSM.setToValue(1.0);
+				fadeOutUSSM.setCycleCount(2);
+				fadeOutUSSM.setAutoReverse(true);
+				fadeOutUSSM.playFromStart();
+				fadeOutUSSM.setOnFinished(new EventHandler<ActionEvent>() {
 					@Override
 					public void handle(ActionEvent actionEvent) {
 						updateScriptSuccessMessage.setManaged(false);
@@ -406,6 +448,7 @@ public class ApplicationPage {
 		editOldScriptButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent event) {
 				FileChooser chooser = new FileChooser();
+				chooser.setTitle("Select shortcut to edit");
 				if (isWindows()) {
 					ExtensionFilter filter = new ExtensionFilter("Script Files", "*.bat");
 					chooser.getExtensionFilters().add(filter);
@@ -417,10 +460,6 @@ public class ApplicationPage {
 				chooser.setInitialDirectory(new File(System.getProperty("user.home") + "/Desktop/"));
 				File file = chooser.showOpenDialog(primaryStage);
 				if (file != null) {
-					noFileSelectedWarning.setVisible(false);
-					noFileSelectedWarning.setManaged(false);
-					noSitesOrFilesWarning.setVisible(false);
-					noSitesOrFilesWarning.setManaged(false);
 					fileToUpdate = file;
 					try {
 						clearWebsites();
@@ -435,8 +474,18 @@ public class ApplicationPage {
 					}
 				}
 				else {
+					selectFileNameWarning.setManaged(false);
+					noSitesOrFilesWarning.setManaged(false);
+					saveScriptSuccessMessage.setManaged(false);
+					updateScriptSuccessMessage.setManaged(false);
 					noFileSelectedWarning.setVisible(true);
 					noFileSelectedWarning.setManaged(true);
+					fadeOutNFSW.setNode(noFileSelectedWarning);
+					fadeOutNFSW.setFromValue(0.0);
+					fadeOutNFSW.setToValue(1.0);
+					fadeOutNFSW.setCycleCount(2);
+					fadeOutNFSW.setAutoReverse(true);
+					fadeOutNFSW.playFromStart();
 				}
 			}
 		});
@@ -452,7 +501,7 @@ public class ApplicationPage {
 		 * Adds the website label warning for wrong format to the website url pane (invisible until the condition is met).
 		 */
 		websiteLabelWarning.setTextFill(Color.RED);
-		websiteLabelWarning.setManaged(false);
+		websiteLabelWarning.setManaged(true);
 		websiteLabelWarning.setVisible(false);
 		websiteURLPane.getChildren().add(websiteLabelWarning);
 
@@ -460,20 +509,13 @@ public class ApplicationPage {
 		 * Adds the non executable warning to the file path pane.
 		 */
 		nonExecutableWarning.setTextFill(Color.RED);
-		nonExecutableWarning.setManaged(false);
+		nonExecutableWarning.setManaged(true);
 		nonExecutableWarning.setVisible(false);
 		filePathPane.getChildren().add(nonExecutableWarning);
 
-		/**
-		 * Sets various components invisible (until conditions are met).
-		 */
-		fileAlreadyExistsWarning.setTextFill(Color.RED);
-		fileAlreadyExistsWarning.setVisible(false);
-		fileAlreadyExistsWarning.setManaged(false);
-
 		selectFileNameWarning.setTextFill(Color.RED);
 		selectFileNameWarning.setVisible(false);
-		selectFileNameWarning.setManaged(false);
+		selectFileNameWarning.setManaged(true);
 
 		noFileSelectedWarning.setTextFill(Color.RED);
 		noFileSelectedWarning.setVisible(false);
@@ -491,10 +533,37 @@ public class ApplicationPage {
 		updateScriptSuccessMessage.setVisible(false);
 		updateScriptSuccessMessage.setManaged(false);
 
-		fadeOut = new FadeTransition(
-				Duration.millis(2000)
+		fadeOutWLW = new FadeTransition(
+				Duration.millis(4000)
 				);
 
+		fadeOutWLW = new FadeTransition(
+				Duration.millis(4000)
+				);
+
+		fadeOutNEW = new FadeTransition(
+				Duration.millis(4000)
+				);
+
+		fadeOutSFNW = new FadeTransition(
+				Duration.millis(4000)
+				);
+
+		fadeOutNFSW = new FadeTransition(
+				Duration.millis(4000)
+				);
+
+		fadeOutNSOFW = new FadeTransition(
+				Duration.millis(4000)
+				);
+
+		fadeOutSSSM = new FadeTransition(
+				Duration.millis(4000)
+				);
+
+		fadeOutUSSM = new FadeTransition(
+				Duration.millis(4000)
+				);
 
 
 		updateScriptButton.setVisible(false);
@@ -575,7 +644,6 @@ public class ApplicationPage {
 		bottomPane.getChildren().add(scriptButtonPane);
 
 		FlowPane warningPane = new FlowPane();
-		warningPane.getChildren().add(fileAlreadyExistsWarning);
 		warningPane.getChildren().add(selectFileNameWarning);
 		warningPane.getChildren().add(noFileSelectedWarning);
 		warningPane.getChildren().add(noSitesOrFilesWarning);
@@ -597,40 +665,45 @@ public class ApplicationPage {
 				if (script.getWebsites().isEmpty() == false || script.getFiles().isEmpty() == false) {
 					FileChooser fileChooser = new FileChooser();
 					fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "/Desktop/"));
+					fileChooser.setInitialFileName(ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().getText());
+					fileChooser.setTitle("Save Shortcut As...");
 					if (isWindows()) {
 						fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Batch File(*.bat)", "*.bat"));
 					}
 					else if (isMac()) {
 						fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Command File(*.command)", "*.command"));
 					}
-					fileChooser.setTitle("Save Shortcut");
 					File file = fileChooser.showSaveDialog(primaryStage);
 					try {
 						if (file == null) {
+							noSitesOrFilesWarning.setManaged(false);
+							noFileSelectedWarning.setManaged(false);
+							updateScriptSuccessMessage.setManaged(false);
+							saveScriptSuccessMessage.setManaged(false);
 							selectFileNameWarning.setVisible(true);
 							selectFileNameWarning.setManaged(true);
+							fadeOutSFNW.setNode(selectFileNameWarning);
+							fadeOutSFNW.setFromValue(0.0);
+							fadeOutSFNW.setToValue(1.0);
+							fadeOutSFNW.setCycleCount(2);
+							fadeOutSFNW.setAutoReverse(true);
+							fadeOutSFNW.playFromStart();
 						}
 						else {
 							createScript(file);
 							ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().setText(file.getName());
-							selectFileNameWarning.setVisible(false);
+							noSitesOrFilesWarning.setManaged(false);
+							noFileSelectedWarning.setManaged(false);
 							selectFileNameWarning.setManaged(false);
-							fileAlreadyExistsWarning.setVisible(false);
-							fileAlreadyExistsWarning.setManaged(false);
+							updateScriptSuccessMessage.setManaged(false);
 							saveScriptSuccessMessage.setManaged(true);
 							saveScriptSuccessMessage.setVisible(true);
-							fadeOut.setNode(saveScriptSuccessMessage);
-							fadeOut.setFromValue(0.0);
-							fadeOut.setToValue(1.0);
-							fadeOut.setCycleCount(2);
-							fadeOut.setAutoReverse(true);
-							fadeOut.playFromStart();
-							fadeOut.setOnFinished(new EventHandler<ActionEvent>() {
-								@Override
-								public void handle(ActionEvent actionEvent) {
-									saveScriptSuccessMessage.setManaged(false);
-								}
-							});
+							fadeOutSSSM.setNode(saveScriptSuccessMessage);
+							fadeOutSSSM.setFromValue(0.0);
+							fadeOutSSSM.setToValue(1.0);
+							fadeOutSSSM.setCycleCount(2);
+							fadeOutSSSM.setAutoReverse(true);
+							fadeOutSSSM.playFromStart();
 						}
 					}
 					catch (IOException e) {
@@ -638,8 +711,18 @@ public class ApplicationPage {
 					}
 				}
 				else {
+					noFileSelectedWarning.setManaged(false);
+					selectFileNameWarning.setManaged(false);
+					updateScriptSuccessMessage.setManaged(false);
+					saveScriptSuccessMessage.setManaged(false);
 					noSitesOrFilesWarning.setVisible(true);
 					noSitesOrFilesWarning.setManaged(true);
+					fadeOutNSOFW.setNode(noSitesOrFilesWarning);
+					fadeOutNSOFW.setFromValue(0.0);
+					fadeOutNSOFW.setToValue(1.0);
+					fadeOutNSOFW.setCycleCount(2);
+					fadeOutNSOFW.setAutoReverse(true);
+					fadeOutNSOFW.playFromStart();
 				}
 			}
 		});
@@ -867,8 +950,6 @@ public class ApplicationPage {
 	}
 
 	public void addWebsite(Website website) {
-		websiteLabelWarning.setManaged(false);
-		websiteLabelWarning.setVisible(false);
 		removeWebsiteButton.setVisible(true);
 		updateWebsiteLVButton.setVisible(true);
 		clearWebsiteButton.setVisible(true);
@@ -877,8 +958,6 @@ public class ApplicationPage {
 		websiteLabelsListView.getItems().addAll(website.getLabel());
 		websiteLabelsListView.getSelectionModel().selectLast();
 		websiteURL.requestFocus();
-		noSitesOrFilesWarning.setVisible(false);
-		noSitesOrFilesWarning.setManaged(false);
 	}
 
 	public void removeWebsite() {
@@ -934,8 +1013,6 @@ public class ApplicationPage {
 		updateWebsiteLVButton.setVisible(false);
 		clearWebsiteButton.setVisible(false);
 		websiteURL.clear();
-		websiteLabelWarning.setVisible(false);
-		websiteLabelWarning.setManaged(false);
 	}
 
 	public void addFile() {
@@ -950,8 +1027,6 @@ public class ApplicationPage {
 		clearFileButton.setVisible(true);
 		filePath.requestFocus();
 		filePath.clear();
-		noSitesOrFilesWarning.setVisible(false);
-		noSitesOrFilesWarning.setManaged(false);
 	}
 
 	public void removeFile() {
@@ -975,27 +1050,31 @@ public class ApplicationPage {
 			addFileButton.setManaged(false);
 
 			FileChooser chooser = new FileChooser();
+			chooser.setTitle("Update File");
 			File file = chooser.showOpenDialog(primaryStage);
 			if (file != null) {
 				updateFilePathButton.setVisible(true);
 				updateFilePathButton.setManaged(true);
-				nonExecutableWarning.setManaged(false);
-				nonExecutableWarning.setVisible(false);
 				filePath.setText(file.getName());
 				fileChosen = file;
 			} else {
 				nonExecutableWarning.setManaged(true);
 				nonExecutableWarning.setVisible(true);
+				fadeOutNEW.setNode(nonExecutableWarning);
+				fadeOutNEW.setFromValue(0.0);
+				fadeOutNEW.setToValue(1.0);
+				fadeOutNEW.setCycleCount(2);
+				fadeOutNEW.setAutoReverse(true);
+				fadeOutNEW.playFromStart();
 			}
 		}
 	}
 
 	public void browseFiles() {
 		FileChooser chooser = new FileChooser();
+		chooser.setTitle("Browse Files");
 		File file = chooser.showOpenDialog(primaryStage);
 		if (file != null) {
-			nonExecutableWarning.setManaged(false);
-			nonExecutableWarning.setVisible(false);
 			filePath.setText(file.getName());
 			fileChosen = file;
 			addFileButton.setManaged(true);
@@ -1004,6 +1083,12 @@ public class ApplicationPage {
 		} else {
 			nonExecutableWarning.setManaged(true);
 			nonExecutableWarning.setVisible(true);
+			fadeOutNEW.setNode(nonExecutableWarning);
+			fadeOutNEW.setFromValue(0.0);
+			fadeOutNEW.setToValue(1.0);
+			fadeOutNEW.setCycleCount(2);
+			fadeOutNEW.setAutoReverse(true);
+			fadeOutNEW.playFromStart();
 		}
 	}
 
@@ -1031,8 +1116,6 @@ public class ApplicationPage {
 		addFileButton.setVisible(false);
 		clearFileButton.setVisible(false);
 		filePath.clear();
-		nonExecutableWarning.setVisible(false);
-		nonExecutableWarning.setManaged(false);
 	}
 
 	public static boolean isWindows() {

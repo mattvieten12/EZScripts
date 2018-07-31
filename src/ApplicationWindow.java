@@ -24,7 +24,8 @@ public class ApplicationWindow extends Application {
 
 	private ArrayList<ApplicationPage> appPages;
 	protected static TabPane tabPane;
-
+	protected static Stage primaryStage;
+	
 	private Scene appScene;
 
 	/**
@@ -43,12 +44,12 @@ public class ApplicationWindow extends Application {
 	 */
 	@Override
 	public void start(Stage stage) throws IOException {
-
 		/**
 		 * Sets title of application to "EZScripts"
 		 */
 		stage.setTitle("EZScripts");
-
+		primaryStage = stage;
+		
 		/**
 		 * Creates tab pane and tabs at the top of application for creating new scripts and updating old scripts.
 		 */
