@@ -35,10 +35,8 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -421,12 +419,16 @@ public class ApplicationPage {
 				if (file != null) {
 					noFileSelectedWarning.setVisible(false);
 					noFileSelectedWarning.setManaged(false);
+					noSitesOrFilesWarning.setVisible(false);
+					noSitesOrFilesWarning.setManaged(false);
 					fileToUpdate = file;
 					try {
 						clearWebsites();
 						clearFiles();
 						readScript(file);
-						websiteBrowsers.getSelectionModel().select(browserChosen);
+						if (isWindows()) {
+							websiteBrowsers.getSelectionModel().select(browserChosen);
+						}
 						ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().setText(file.getName());
 					} catch (FileNotFoundException e) {
 
@@ -559,7 +561,13 @@ public class ApplicationPage {
 		FlowPane saveAndUpdatePane = new FlowPane();
 		saveAndUpdatePane.getChildren().add(saveScriptButton);
 		saveAndUpdatePane.getChildren().add(updateScriptButton);
-		saveAndUpdatePane.prefWrapLengthProperty().set(325);
+		if (isWindows()) {
+			saveAndUpdatePane.prefWrapLengthProperty().set(325);
+		}
+		else if (isMac()) {
+			saveAndUpdatePane.prefWrapLengthProperty().set(420);
+		}
+
 		scriptButtonPane.setLeft(saveAndUpdatePane);
 		scriptButtonPane.setRight(editOldScriptButton);
 
@@ -1085,16 +1093,13 @@ public class ApplicationPage {
 		else if (isMac()) {
 			dos.writeBytes("#!/bin/bash");
 			dos.writeBytes(newLine);
-
-			if (browserChosen == "Safari") {
+			/*if (browserChosen == "Safari") {
 				browserEXE = "Safari";
-			}
-			else if (browserChosen == "Google Chrome") {
+			}*/
+			if (browserChosen == "Google Chrome") {
 				browserEXE = "Google Chrome";
 			}
-			else if (browserChosen == "FireFox") {
-				browserEXE = "FireFox";
-			}
+
 			if (script.getWebsites().isEmpty() == false) {
 				dos.writeBytes(bashWebsiteSection);
 				dos.writeBytes(newLine);
@@ -1105,19 +1110,19 @@ public class ApplicationPage {
 					website = new Website("https://" + website.getURL(), website.getLabel());
 				}
 				if (script.getWebsites().get(0) == website) {
-					dos.writeBytes("open -na " + browserChosen + " --args --new-window " + website.getURL()); 
+					dos.writeBytes("open -na " + browserEXE + " --args --new-window " + website.getURL()); 
 					dos.writeBytes(newLine);
 					dos.writeBytes("wait");
 					dos.writeBytes(newLine);
 				}
 				else if (script.getWebsites().get(script.getWebsites().size() - 1) == website) {
-					dos.writeBytes("open -na " + browserChosen + " " + website.getURL()); 
+					dos.writeBytes("open -na " + browserEXE + " " + website.getURL()); 
 					dos.writeBytes(newLine);
 					dos.writeBytes("wait");
 					dos.writeBytes(newLine);
 				}
 				else {
-					dos.writeBytes("open -na " + browserChosen + " " + website.getURL()); 
+					dos.writeBytes("open -na " + browserEXE + " " + website.getURL()); 
 					dos.writeBytes(newLine);
 					dos.writeBytes("wait");
 					dos.writeBytes(newLine);
