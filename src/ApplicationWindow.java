@@ -8,6 +8,8 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -25,7 +27,11 @@ public class ApplicationWindow extends Application {
 	private ArrayList<ApplicationPage> appPages;
 	protected static TabPane tabPane;
 	protected static Stage primaryStage;
+
+	protected static ArrayList<String> scriptFileNames = new ArrayList<String>();
 	
+	protected static int untitledIndex;
+
 	private Scene appScene;
 
 	/**
@@ -49,21 +55,26 @@ public class ApplicationWindow extends Application {
 		 */
 		stage.setTitle("EZScripts");
 		primaryStage = stage;
-		
 		/**
 		 * Creates tab pane and tabs at the top of application for creating new scripts and updating old scripts.
 		 */
 		tabPane = new TabPane();
-
-		tabPane = new TabPane();
-		final Tab newTab = new Tab("+");
+		
+		untitledIndex = 1;
+		Tab newTab = new Tab("+");
 		newTab.setClosable(false);
 		tabPane.getTabs().add(newTab);
-		createAndSelectNewTab(tabPane, "Untitled");
-
+		Tab curr = createAndSelectNewTab(tabPane, "Untitled");
+		curr.setOnClosed(event -> {
+			scriptFileNames.remove(curr.getText());
+			int appPageIndex = tabPane.getSelectionModel().getSelectedIndex();
+			appPages.remove(appPageIndex);
+		});
 		appPages = new ArrayList<ApplicationPage>();
-		appPages.add(new ApplicationPage(new Script(new ArrayList<Website>(), new ArrayList<App>())));
-		appPages.get(appPages.size() - 1).appLayout.setTop(tabPane);
+		ApplicationPage currAppPage = new ApplicationPage(new Script(new ArrayList<Website>(), new ArrayList<App>()));
+		appPages.add(currAppPage);
+		System.out.println("App page: " + appPages.get(0).appScene.getHeight());
+		//appPages.get(appPages.size() - 1).appLayout.setTop(tabPane);
 
 		tabPane.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Tab>() {
 			@Override
@@ -71,26 +82,44 @@ public class ApplicationWindow extends Application {
 					Tab oldSelectedTab, Tab newSelectedTab) {
 				int index = tabPane.getTabs().indexOf(newSelectedTab);
 				if (newSelectedTab == newTab) {
-					appPages.add(new ApplicationPage(new Script(new ArrayList<Website>(), new ArrayList<App>())));
+					ApplicationPage newAppPage = new ApplicationPage(new Script(new ArrayList<Website>(), new ArrayList<App>()));
+					appPages.add(newAppPage);
 					index = tabPane.getTabs().indexOf(newSelectedTab);
-					createAndSelectNewTab(tabPane, "Untitled " + (tabPane.getTabs().size()));
+					Tab curr = createAndSelectNewTab(tabPane, "Untitled " + (untitledIndex));
+					untitledIndex++;
+					curr.setOnClosed(event -> {
+						scriptFileNames.remove(curr.getText());
+						int appPageIndex = tabPane.getSelectionModel().getSelectedIndex();
+						appPages.remove(appPageIndex);
+					});
 				}
 				appScene = appPages.get(index).appScene;
+				//System.out.println(primaryStage.getHeight());
+				//System.out.println(primaryStage.getHeight());
 				appPages.get(index).appLayout.setTop(tabPane);
 				stage.setScene(appScene);
 				stage.show();
+				System.out.println(stage.getHeight());
+				System.out.println("App page: " + appPages.get(index).appScene.getHeight());
+				appPages.get(index).websiteURL.requestFocus();
 			}
 		});
+		
+		System.out.println(scriptFileNames);
 
-		appPages.get(appPages.size() - 1).appLayout.setTop(tabPane);
+		currAppPage.appLayout.setTop(tabPane);
 		appScene = appPages.get(appPages.size() - 1).appScene;
 
+		
 		stage.setScene(appScene);
+		
 		stage.show();
 		stage.setResizable(false);
+		
+		System.out.println(stage.getHeight());
 	}
 
-	private Tab createAndSelectNewTab(final TabPane tabPane, final String title) {
+	/*private Tab createAndSelectNewTab(final TabPane tabPane, final String title) {
 		Tab tab = new Tab(title);
 		final ObservableList<Tab> tabs = tabPane.getTabs();
 		tab.closableProperty().bind(Bindings.size(tabs).greaterThan(2));
@@ -98,6 +127,15 @@ public class ApplicationWindow extends Application {
 			int index = tabPane.getTabs().indexOf(tab);
 			appPages.remove(index);
 		});
+		tabs.add(tabs.size() - 1, tab);
+		tabPane.getSelectionModel().select(tab);
+		return tab;
+	}*/
+	
+	private Tab createAndSelectNewTab(TabPane tabPane, String title) {
+		Tab tab = new Tab(title);
+		ObservableList<Tab> tabs = tabPane.getTabs();
+		tab.closableProperty().bind(Bindings.size(tabs).greaterThan(2));
 		tabs.add(tabs.size() - 1, tab);
 		tabPane.getSelectionModel().select(tab);
 		return tab;
