@@ -350,7 +350,7 @@ public class ApplicationPage {
 			public void handle(ActionEvent event) {
 				if (websiteURL.getText() != null) {
 					Pattern p = Pattern.compile(regex);
-					Matcher m = p.matcher(websiteURL.getText());	
+					Matcher m = p.matcher(websiteURL.getText());
 					if (m.find()) {
 						String websiteName = websiteURL.getText().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
 						Website website = new Website(websiteURL.getText(), websiteName);
@@ -471,11 +471,13 @@ public class ApplicationPage {
 							clearFiles();
 							readScript(file);
 							ApplicationWindow.scriptFileNames.add(file.getName());
-							ApplicationWindow.scriptFileNames.remove(ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().getText());
+							System.out.println("Before " + ApplicationWindow.scriptFileNames);
+							ApplicationWindow.scriptFileNames.remove(((Label) ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().getGraphic()).getText());
+							System.out.println("ScriptfileNames: " + ApplicationWindow.scriptFileNames);
 							if (isWindows()) {
 								websiteBrowsers.getSelectionModel().select(browserChosen);
 							}
-							ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().setText(file.getName());
+							ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().setGraphic(new Label(file.getName()));
 						} catch (FileNotFoundException e) {
 
 						}
@@ -700,7 +702,7 @@ public class ApplicationPage {
 				if (script.getWebsites().isEmpty() == false || script.getFiles().isEmpty() == false) {
 					FileChooser fileChooser = new FileChooser();
 					fileChooser.setInitialDirectory(new File(System.getProperty("user.home") + "/Desktop/"));
-					fileChooser.setInitialFileName(ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().getText());
+					fileChooser.setInitialFileName(((Label) ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().getGraphic()).getText());
 					fileChooser.setTitle("Save Shortcut As...");
 					if (isWindows()) {
 						fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Batch File(*.bat)", "*.bat"));
@@ -729,7 +731,7 @@ public class ApplicationPage {
 							createScript(file);
 							ApplicationWindow.scriptFileNames.add(file.getName());
 							System.out.println(ApplicationWindow.scriptFileNames);
-							ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().setText(file.getName());
+							ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().setGraphic(new Label(file.getName()));
 							noSitesOrFilesWarning.setManaged(false);
 							noFileSelectedWarning.setManaged(false);
 							fileAlreadyOpenWarning.setManaged(false);
@@ -768,7 +770,7 @@ public class ApplicationPage {
 		});
 
 		/**
-		 * 
+		 *
 		 */
 		websiteLabelsListView.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
 			@Override
@@ -1213,7 +1215,7 @@ public class ApplicationPage {
 			}
 			dos.close();
 			fos.close();
-		} 
+		}
 		else if (isMac()) {
 			dos.writeBytes("#!/bin/bash");
 			dos.writeBytes(newLine);
@@ -1234,19 +1236,19 @@ public class ApplicationPage {
 					website = new Website("https://" + website.getURL(), website.getLabel());
 				}
 				if (script.getWebsites().get(0) == website) {
-					dos.writeBytes("open -na " + browserEXE + " --args --new-window " + website.getURL()); 
+					dos.writeBytes("open -na " + browserEXE + " --args --new-window " + website.getURL());
 					dos.writeBytes(newLine);
 					dos.writeBytes("wait");
 					dos.writeBytes(newLine);
 				}
 				else if (script.getWebsites().get(script.getWebsites().size() - 1) == website) {
-					dos.writeBytes("open -na " + browserEXE + " " + website.getURL()); 
+					dos.writeBytes("open -na " + browserEXE + " " + website.getURL());
 					dos.writeBytes(newLine);
 					dos.writeBytes("wait");
 					dos.writeBytes(newLine);
 				}
 				else {
-					dos.writeBytes("open -na " + browserEXE + " " + website.getURL()); 
+					dos.writeBytes("open -na " + browserEXE + " " + website.getURL());
 					dos.writeBytes(newLine);
 					dos.writeBytes("wait");
 					dos.writeBytes(newLine);
@@ -1258,7 +1260,7 @@ public class ApplicationPage {
 			}
 
 			for (App currApp: script.getFiles()) {
-				dos.writeBytes("open '" + currApp.getPath() + "'"); 
+				dos.writeBytes("open '" + currApp.getPath() + "'");
 				dos.writeBytes(newLine);
 			}
 			dos.close();

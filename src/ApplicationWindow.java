@@ -4,15 +4,20 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
 /**
@@ -29,7 +34,7 @@ public class ApplicationWindow extends Application {
 	protected static Stage primaryStage;
 
 	protected static ArrayList<String> scriptFileNames = new ArrayList<String>();
-	
+
 	protected static int untitledIndex;
 
 	private Scene appScene;
@@ -58,18 +63,16 @@ public class ApplicationWindow extends Application {
 		/**
 		 * Creates tab pane and tabs at the top of application for creating new scripts and updating old scripts.
 		 */
-		tabPane = new TabPane();
-		
+		tabPane = new TabPane() {
+			@Override
+			public void requestFocus() { }
+		};
+
 		untitledIndex = 1;
 		Tab newTab = new Tab("+");
 		newTab.setClosable(false);
 		tabPane.getTabs().add(newTab);
-		Tab curr = createAndSelectNewTab(tabPane, "Untitled");
-		curr.setOnClosed(event -> {
-			scriptFileNames.remove(curr.getText());
-			int appPageIndex = tabPane.getSelectionModel().getSelectedIndex();
-			appPages.remove(appPageIndex);
-		});
+		createAndSelectNewTab(tabPane, "Untitled");
 		appPages = new ArrayList<ApplicationPage>();
 		ApplicationPage currAppPage = new ApplicationPage(new Script(new ArrayList<Website>(), new ArrayList<App>()));
 		appPages.add(currAppPage);
@@ -77,45 +80,53 @@ public class ApplicationWindow extends Application {
 		//appPages.get(appPages.size() - 1).appLayout.setTop(tabPane);
 
 		tabPane.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Tab>() {
+
 			@Override
 			public void changed(ObservableValue<? extends Tab> observable,
 					Tab oldSelectedTab, Tab newSelectedTab) {
 				int index = tabPane.getTabs().indexOf(newSelectedTab);
+				System.out.println(index);
+
 				if (newSelectedTab == newTab) {
 					ApplicationPage newAppPage = new ApplicationPage(new Script(new ArrayList<Website>(), new ArrayList<App>()));
 					appPages.add(newAppPage);
 					index = tabPane.getTabs().indexOf(newSelectedTab);
-					Tab curr = createAndSelectNewTab(tabPane, "Untitled " + (untitledIndex));
+					createAndSelectNewTab(tabPane, "Untitled " + (untitledIndex));
 					untitledIndex++;
-					curr.setOnClosed(event -> {
-						scriptFileNames.remove(curr.getText());
-						int appPageIndex = tabPane.getSelectionModel().getSelectedIndex();
-						appPages.remove(appPageIndex);
-					});
 				}
+				int finalIndex = index;
+				newSelectedTab.setOnClosed(event -> {
+					scriptFileNames.remove(((Label) newSelectedTab.getGraphic()).getText());
+					System.out.println("SCRIPTFILENAMES: " + scriptFileNames);
+					appPages.remove(finalIndex);
+					if (finalIndex < appPages.size()) {
+						appScene = appPages.get(finalIndex).appScene;
+						appPages.get(finalIndex).appLayout.setTop(tabPane);
+					} else {
+						appScene = appPages.get(finalIndex - 1).appScene;
+						appPages.get(finalIndex - 1).appLayout.setTop(tabPane);
+					}
+					stage.setScene(appScene);
+					stage.show();
+				});
 				appScene = appPages.get(index).appScene;
-				//System.out.println(primaryStage.getHeight());
-				//System.out.println(primaryStage.getHeight());
 				appPages.get(index).appLayout.setTop(tabPane);
 				stage.setScene(appScene);
 				stage.show();
-				System.out.println(stage.getHeight());
-				System.out.println("App page: " + appPages.get(index).appScene.getHeight());
-				appPages.get(index).websiteURL.requestFocus();
+				System.out.println("Index: " + index);
+				Platform.runLater(() -> appPages.get(finalIndex).websiteURL.requestFocus());
 			}
 		});
-		
 		System.out.println(scriptFileNames);
-
 		currAppPage.appLayout.setTop(tabPane);
 		appScene = appPages.get(appPages.size() - 1).appScene;
 
-		
+
 		stage.setScene(appScene);
-		
+
 		stage.show();
 		stage.setResizable(false);
-		
+
 		System.out.println(stage.getHeight());
 	}
 
@@ -131,13 +142,50 @@ public class ApplicationWindow extends Application {
 		tabPane.getSelectionModel().select(tab);
 		return tab;
 	}*/
-	
+
 	private Tab createAndSelectNewTab(TabPane tabPane, String title) {
-		Tab tab = new Tab(title);
+		final Label label = new Label(title);
+		Tab tab = new Tab();
+		tab.setGraphic(label);
+		final TextField textField = new TextField();
+		label.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			@Override
+			public void handle(MouseEvent event) {
+				if (event.getClickCount()==2) {
+					textField.setText(label.getText());
+					tab.setGraphic(textField);
+					textField.selectAll();
+					textField.requestFocus();
+				}
+			}
+		});
+
+
+		textField.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				label.setText(textField.getText());
+				tab.setGraphic(label);
+			}
+		});
+
+
+		textField.focusedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable,
+					Boolean oldValue, Boolean newValue) {
+				if (! newValue) {
+					label.setText(textField.getText());
+					tab.setGraphic(label);
+				}
+			}
+		});
 		ObservableList<Tab> tabs = tabPane.getTabs();
 		tab.closableProperty().bind(Bindings.size(tabs).greaterThan(2));
 		tabs.add(tabs.size() - 1, tab);
 		tabPane.getSelectionModel().select(tab);
+		scriptFileNames.add(label.getText());
+		System.out.println("ScriptFILENAMES: " + scriptFileNames);
 		return tab;
 	}
 }
