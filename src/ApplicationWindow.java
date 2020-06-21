@@ -99,12 +99,15 @@ public class ApplicationWindow extends Application {
 					scriptFileNames.remove(((Label) newSelectedTab.getGraphic()).getText());
 					System.out.println("SCRIPTFILENAMES: " + scriptFileNames);
 					appPages.remove(finalIndex);
-					if (finalIndex < appPages.size()) {
-						appScene = appPages.get(finalIndex).appScene;
-						appPages.get(finalIndex).appLayout.setTop(tabPane);
-					} else {
+					if (finalIndex == appPages.size()) {
 						appScene = appPages.get(finalIndex - 1).appScene;
 						appPages.get(finalIndex - 1).appLayout.setTop(tabPane);
+						System.out.println("GOT HERE: " + appPages.get(finalIndex - 1).getScript().getWebsites());
+
+					} else if (finalIndex == 0){
+						appScene = appPages.get(finalIndex).appScene;
+						appPages.get(finalIndex).appLayout.setTop(tabPane);
+						System.out.println("GOT HERE: " + appPages.get(finalIndex).getScript().getWebsites());
 					}
 					stage.setScene(appScene);
 					stage.show();
@@ -152,6 +155,7 @@ public class ApplicationWindow extends Application {
 			@Override
 			public void handle(MouseEvent event) {
 				if (event.getClickCount()==2) {
+					scriptFileNames.remove(((Label)tab.getGraphic()).getText());
 					textField.setText(label.getText());
 					tab.setGraphic(textField);
 					textField.selectAll();
@@ -166,6 +170,7 @@ public class ApplicationWindow extends Application {
 			public void handle(ActionEvent event) {
 				label.setText(textField.getText());
 				tab.setGraphic(label);
+				scriptFileNames.add(label.getText());
 			}
 		});
 

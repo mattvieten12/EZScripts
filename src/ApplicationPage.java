@@ -729,7 +729,6 @@ public class ApplicationPage {
 						}
 						else {
 							createScript(file);
-							ApplicationWindow.scriptFileNames.add(file.getName());
 							System.out.println(ApplicationWindow.scriptFileNames);
 							ApplicationWindow.tabPane.getSelectionModel().getSelectedItem().setGraphic(new Label(file.getName()));
 							noSitesOrFilesWarning.setManaged(false);
